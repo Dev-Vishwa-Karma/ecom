@@ -26,6 +26,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotifyMeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductRatingController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UserImageController;
 
@@ -182,7 +183,8 @@ use App\Http\Controllers\UserImageController;
             // Route::get('orders/{order}/invoice', [InvoiceController::class, 'invoice']);
             Route::post('/notify-me',[NotifyMeController::class,'store'])->name('notify.store');
             Route::get('/product/{product}', [ProductController::class, 'productDetails'])->name('product.details');
-
+            Route::post('/product/rate', [ProductRatingController::class, 'store'])->name('product.rate.store');
+            Route::post('/upload-image', [ProductRatingController::class, 'uploadImage'])->name('image.upload');
 
             Route::post('/logout', [AuthController::class,'logout'])->name('logout');
         });

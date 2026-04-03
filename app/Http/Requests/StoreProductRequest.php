@@ -28,11 +28,11 @@ class StoreProductRequest extends FormRequest
            'description' => 'nullable|string',
 
         'images'   => 'required|array|min:1',
-        'images.*' => 'images|max:5120',
+        'images.*' => 'image|max:5120',
 
         'variants'             => 'required|array|min:1',
         'variants.*.price'     => 'required|numeric|min:0',
-        'variants.*.quantity'  => 'required|integer|max:50',
+        'variants.*.quantity'  => 'required|integer',
         'variants.*.color'     => 'nullable|string|max:50',
         'variants.*.size'      => 'nullable|string|max:50',
         'variants.*.gender'    => 'nullable|string|max:50',

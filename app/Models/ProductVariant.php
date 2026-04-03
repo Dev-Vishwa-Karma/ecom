@@ -27,4 +27,8 @@ public function images()
     {
         return $this->hasMany(ProductImage::class,'product_id','product_id');
     }
+    public function ratings()
+    {
+        return $this->hasMany(ProductRating::class, 'variant_id');
+    }
 }

@@ -49,7 +49,7 @@ class ProductService{
             );
 
             $product->images()->create([
-                'images'=> $uploaded->getSecurePath(),
+                'image'=> $uploaded->getSecurePath(),
                 'public_id' => $uploaded->getPublicId() ,
                 
                 ]);

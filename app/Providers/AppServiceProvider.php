@@ -28,8 +28,8 @@ class AppServiceProvider extends ServiceProvider
     {
             Product::observe(ProductObserver::class);
 
-        // if (app()->environment('local')) {
-        // URL::forceScheme('https');
-    // }
+        if (app()->environment('local')) {
+        URL::forceScheme('https');
+    }
     }
 }

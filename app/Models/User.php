@@ -12,6 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
     use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\Models\UserImage;
+use App\Models\ProductRating;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -44,6 +45,7 @@ class User extends Authenticatable implements JWTSubject
     protected $fillable = [
         'name',
         'email',
+        'stripe_account_id',
         'address',
         'mobile',
         'password',
@@ -75,6 +77,11 @@ class User extends Authenticatable implements JWTSubject
     public function fcmTokens()
     {
         return $this->hasMany(FcmToken::class);
+    }
+
+    public function ratings()
+    {
+        return $this->hasMany(ProductRating::class);
     }
  
 }

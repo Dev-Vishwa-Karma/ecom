@@ -39,7 +39,7 @@
                 <a href="#" class="stock-btn" data-id="{{ $product->id }}">Manage Stock</a>
                 <a href="#" class="delete-btn" data-id="{{ $product->id }}">Delete</a>
             </div>
-            <h4 style="color:#ff8c00; margin:12px 0 4px;">{{ $product->name }}</h4>
+            <h4 style="color:#ff8c00;margin:12px 0 4px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">{{ $product->name }}</h4>
             <p style="margin:4px 0;">₹ {{ number_format($product->variants->min('price') ?? 0, 2) }}</p>
             <small style="color:#aaa;">By {{ $product->user?->name ?? '—' }}</small>
         </div>

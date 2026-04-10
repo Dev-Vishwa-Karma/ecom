@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\ProductVariant;
+use App\Models\Wishlist;
 use Illuminate\Support\Facades\Auth;
 
 class OrderService
@@ -40,8 +41,13 @@ class OrderService
             'order_date'     => now(),
         ]);
 
-        $variant->decrement('quantity', $validated['quantity']);
+    $variant->decrement('quantity', $validated['quantity']);
 
-        return $order;
+    //  Remove from wishlist automatically
+    Wishlist::where('user_id', Auth::id())
+        ->where('product_id', $product->id)
+        ->delete();
+
+    return $order;
     }
 }

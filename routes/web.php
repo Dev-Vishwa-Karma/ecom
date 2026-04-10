@@ -6,6 +6,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\AdminProductViewContoller;
 use Illuminate\Support\Facades\Route;
+  use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,9 +28,11 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotifyMeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductRatingController;
+use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UserImageController;
-
+use Intervention\Image\ImageManager;
 
     Route::get('/', [DashboardRedirectController::class, 'redirect']);
 
@@ -120,6 +124,16 @@ use App\Http\Controllers\UserImageController;
         Route::get('/dashboard', [NotifyMeController::class, 'adminDemandReport'])
         ->name('dashboard')
         ->middleware(['auth', 'role:admin']);
+
+        Route::get('/stripe/connect', [StripeConnectController::class, 'createAccount'])->name('stripe.connect');
+
+    Route::get('/stripe/return', [StripeConnectController::class, 'return'])->name('stripe.return');
+
+    Route::get('/stripe/retry', [StripeConnectController::class, 'retry'])->name('stripe.retry');
+
+    Route::get('/stripe/status', [StripeConnectController::class, 'status'])->name('stripe.status');
+
+
         Route::get('/profile',   fn() => view('admin.profile'))->name('profile');
 
         Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
@@ -182,6 +196,19 @@ use App\Http\Controllers\UserImageController;
             // Route::get('orders/{order}/invoice', [InvoiceController::class, 'invoice']);
             Route::post('/notify-me',[NotifyMeController::class,'store'])->name('notify.store');
             Route::get('/product/{product}', [ProductController::class, 'productDetails'])->name('product.details');
+            Route::post('/product/rate', [ProductRatingController::class, 'store'])->name('product.rate.store');
+            Route::post('/upload-image', [ProductRatingController::class, 'uploadImage'])->name('image.upload');
+            Route::match(['get','post'],'/generate-review-image', [ProductRatingController::class, 'generateReviewImage'])
+    ->name('generate.review.image');
+    Route::get('/share-review/{filename}', [ProductRatingController::class, 'shareReview'])->name('share.review');
+  
+Route::get('/gd-check', function () {
+    return [
+        'gd_loaded' => extension_loaded('gd'),
+        'gd_info' => function_exists('gd_info') ? gd_info() : 'missing',
+    ];
+});
+
 
 
             Route::post('/logout', [AuthController::class,'logout'])->name('logout');

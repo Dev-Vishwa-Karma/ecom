@@ -125,6 +125,20 @@ margin-top:20px;
 .menu-items{
 flex:1;
 }
+div:where(.swal2-icon).swal2-success .swal2-success-ring{
+    color: #ff8c00 !important  ;
+    border-color: #f4c286 !important;
+}
+
+div:where(.swal2-icon).swal2-info{
+    border-color: #fa7777 !important    ;
+    color: #ff4d4d !important    ;
+}
+div:where(.swal2-container) div:where(.swal2-popup){
+    background: #1e1e1e !important;
+    color:white !important;
+}
+
 
 .logout-form{
 margin-top:auto;
@@ -172,7 +186,7 @@ display:block;
 </style>
 </head>
 <body>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <div class="d-flex">
 
 <!-- Sidebar -->
@@ -210,7 +224,7 @@ style="border-radius:50%;"
             <a href="{{ route('super.admin.list') }}" class="nav-link {{ request()->routeIs('super.admin.list') ? 'active-link' : '' }}">Admin List</a>
             <a href="{{ route('customer.list') }}" class="nav-link {{ request()->routeIs('customer.list') ? 'active-link' : '' }}">Customers</a>
             <a href="{{ route('all-products') }}" class="nav-link {{ request()->routeIs('all-products') ? 'active-link' : '' }}">Products</a>
-            <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a>
+            <!-- <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a> -->
             <a href="{{ route('orders') }}" class="nav-link {{ request()->routeIs('orders') ? 'active-link' : '' }}">My Orders</a>
 
 
@@ -219,7 +233,7 @@ style="border-radius:50%;"
             <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active-link' : '' }}">Dashboard</a>
             <a href="{{ route('admin.profile') }}" class="nav-link {{ request()->routeIs('admin.profile') ? 'active-link' : '' }}">Profile</a>
             <a href="{{ route('admin.orders') }}" class="nav-link {{ request()->routeIs('admin.orders') ? 'active-link' : '' }}">Order List</a>
-            <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a>
+            <!-- <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a> -->
             <a href="{{ route('admin.my-products') }}" class="nav-link {{ request()->routeIs('admin.my-products') ? 'active-link' : '' }}">My Products</a>
             <a href="{{ route('admin.all-products') }}" class="nav-link {{ request()->routeIs('admin.all-products') ? 'active-link' : '' }}">All Products</a>
             <a href="{{ route('orders') }}" class="nav-link {{ request()->routeIs('orders') ? 'active-link' : '' }}">My Orders</a>
@@ -230,7 +244,7 @@ style="border-radius:50%;"
             <a href="{{ route('customer.dashboard') }}" class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active-link' : '' }}">Dashboard</a>
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active-link' : '' }}">Profile</a>
             <a href="{{ route('orders') }}" class="nav-link {{ request()->routeIs('orders') ? 'active-link' : '' }}">My Orders</a>
-            <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a>
+            <!-- <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a> -->
             <a href="#" class="nav-link">Support</a>
             @endif
         </div>
@@ -247,21 +261,49 @@ Logout
 </div>
 
 <!-- Content -->
+    <div class="content" id="content">
+        <div class="top-bar">
+            <button class="hamburger" onclick="toggleSidebar()">
+            <i class="bi bi-list"></i>
+            </button>
+ <a href="{{ route('my_cart') }}" class="position-relative" style="color: #ff8c00 !important;">
+            <i class="bi bi-cart3 fs-3"></i>
 
-<div class="content" id="content">
+            <!-- Cart Count Badge -->
+            <span id="cart-count" class="pos    ition-absolute top-0 start-100 translate-middle badge rounded-pill " style="color:white; background-color:#ff8c00;">
+        {{ \App\Models\Wishlist::where('user_id', auth()->id())->count() }}
+            </span>
+        </a>
+        </div>
+    
 
-<div class="top-bar">
-<button class="hamburger" onclick="toggleSidebar()">
-<i class="bi bi-list"></i>
-</button>
-
-</div>
 
 @yield('content')
 
 </div>
 
 </div>
+@if(session('success'))
+<script>
+Swal.fire({
+    icon: 'success',
+    title: 'Success',
+    text: "{{ session('success') }}",
+    confirmButtonColor: '#ff8c00'
+});
+</script>
+@endif
+
+@if(session('error'))
+<script>
+Swal.fire({
+    icon: 'error',
+    title: 'Error',
+    text: "{{ session('error') }}",
+    confirmButtonColor: '#ff4d4d'
+});
+</script>
+@endif
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 

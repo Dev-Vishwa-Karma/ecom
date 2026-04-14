@@ -18,20 +18,21 @@
         <h2 class="mb-4">Welcome, Admin!</h2>
 
         {{-- STRIPE CONNECT SECTION --}}
-<div style="background:#1e1e1e; padding:20px; border-radius:12px; margin-bottom:20px; color:white;">
-    <h4 style="color:#ff8c00;">Stripe Account Status</h4>
+    <div style="background:#1e1e1e; padding:20px; border-radius:12px; margin-bottom:20px; color:white;">
+        <div class="d-flex justify-content-between">
+         <h4 style="color:#ff8c00;">Stripe Account Status</h4>
 
-    <div id="stripeStatusBox">
-    <span style="padding:6px 12px; border-radius:6px; background:#444; color:#fff;">
-        Checking...
-    </span>
+        <div id="stripeStatusBox">
+            <span style="padding:6px 12px; border-radius:6px; background:#444; color:#fff;">
+              Checking...
+            </span>
+        </div>
+        </div>
+        <a href="{{ route('admin.stripe.connect') }}" 
+        style="display:inline-block; margin-top:10px; padding:10px 20px; background:#ff8c00; color:black; border-radius:8px; text-decoration:none; font-weight:bold;">
+            Connect / Update Stripe
+        </a>
     </div>
-
-    <a href="{{ route('admin.stripe.connect') }}" 
-       style="display:inline-block; margin-top:10px; padding:10px 20px; background:#ff8c00; color:black; border-radius:8px; text-decoration:none; font-weight:bold;">
-        Connect / Update Stripe
-    </a>
-</div>
 
 
 <!-- Table section -->

@@ -12,7 +12,7 @@ class Order extends Model
     protected $fillable = [
         'product_id','variant_id', 'user_id', 'seller_id', 'price','quantity',    'total_price',   
         'customer_name', 'address', 'mobile', 'email',
-        'payment_mode', 'card_number', 'card_cvv', 'card_expiry',
+        'payment_mode', 'payment_status','order_number', 'card_number', 'card_cvv', 'card_expiry',
         'dispatch_date', 'status', 'order_date'
     ];
     protected $casts = [

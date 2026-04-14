@@ -38,6 +38,9 @@ class OrderController extends Controller
             
             $order = $this->orderService->placeOrder($request->validated(), $product);
 
+            if ($order->payment_mode === 'online') {
+                return redirect()->route('payment.checkout', $order->id);
+            }
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,

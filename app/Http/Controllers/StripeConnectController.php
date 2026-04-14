@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Stripe\Stripe;
-use Stripe\Account;
 use Stripe\AccountLink;
 
 class StripeConnectController extends Controller
@@ -26,7 +24,7 @@ class StripeConnectController extends Controller
     // Create account
     $account = \Stripe\Account::create([
         'type' => 'express',
-        'country' => 'US',
+        'country' => 'IN',
         'email' => $user->email,
     ]);
 
@@ -58,11 +56,60 @@ class StripeConnectController extends Controller
     /**
      * Step 3: Return URL (After onboarding complete)
      */
-    public function return()
-    {
-        return redirect()->route('admin.dashboard')->with('success', 'Stripe onboarding completed!');
+public function return()
+{
+    \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+    // 🔥 STEP 1: CHECK METHOD HIT OR NOT
+    \Log::info(' Stripe RETURN route hit');
+
+    $user = auth()->user();
+
+    if (!$user) {
+        \Log::error(' User not logged in');
+        dd('User not logged in');
     }
 
+    \Log::info(' User found', ['user_id' => $user->id]);
+
+    if (!$user->stripe_account_id) {
+        \Log::error(' No Stripe Account ID');
+    }
+
+    try {
+        //  STEP 2: FETCH STRIPE ACCOUNT
+        $account = \Stripe\Account::retrieve($user->stripe_account_id);
+
+        \Log::info(' Stripe Account Data', [
+            'id' => $account->id,
+            'charges_enabled' => $account->charges_enabled,
+            'payouts_enabled' => $account->payouts_enabled,
+            'details_submitted' => $account->details_submitted,
+        ]);
+
+        
+
+        //  STEP 4: SAVE TO DB
+        $user->update([
+            'charges_enabled' => $account->charges_enabled,
+            'payouts_enabled' => $account->payouts_enabled,
+            'stripe_onboarded' => $account->details_submitted,
+        ]);
+
+        \Log::info(' DB Updated Successfully');
+
+    } catch (\Exception $e) {
+
+        \Log::error(' Stripe Error', [
+            'message' => $e->getMessage()
+        ]);
+
+        dd('Stripe Error: ' . $e->getMessage());
+    }
+
+    return redirect()->route('admin.dashboard')
+        ->with('success', 'Stripe onboarding completed!');
+}
     /**
      * Step 4: Retry onboarding if incomplete
      */
@@ -80,13 +127,13 @@ class StripeConnectController extends Controller
     /**
      * Step 5: Check Account Status (IMPORTANT)
      */
-    public function status()    
+public function status()
 {
     \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
 
     $user = auth()->user();
 
-    //  Not connected
+    // Not connected
     if (!$user->stripe_account_id) {
         return response()->json([
             'status' => 'not_connected'
@@ -95,8 +142,15 @@ class StripeConnectController extends Controller
 
     $account = \Stripe\Account::retrieve($user->stripe_account_id);
 
+    // SAVE TO DATABASE (MAIN FIX)
+    $user->update([
+        'charges_enabled' => $account->charges_enabled,
+        'payouts_enabled' => $account->payouts_enabled,
+        'stripe_onboarded' => $account->details_submitted,
+    ]);
+
     return response()->json([
-        'status' => 'connected', //  ADD THIS LINE
+        'status' => 'connected',
         'charges_enabled' => $account->charges_enabled,
         'payouts_enabled' => $account->payouts_enabled,
         'details_submitted' => $account->details_submitted,

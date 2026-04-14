@@ -218,6 +218,28 @@ use Intervention\Image\ImageManager;
 
     Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist','my_cart');
 
+/**
+ * 🟢 BUY NOW
+ */
+Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])
+    ->name('buy.now');
+
+Route::post('/order/place/{product}', [OrderController::class, 'placeOrder'])
+    ->name('order.place');
+    Route::get('/cart', [MyCartController::class, 'myCart'])->name('cart');
+
+Route::post('/cart/clear', [MyCartController::class, 'clear'])->name('cart.clear');
+Route::post('/cart/session', [MyCartController::class, 'storeSession'])
+    ->name('cart.session');
+
+/**
+ * 🟡 CART CHECKOUT
+ */
+Route::get('/cart/checkout', [OrderController::class, 'showCartCheckout'])
+    ->name('cart.checkout');
+
+Route::post('/cart/place-order', [OrderController::class, 'placeCartOrder'])
+    ->name('cart.placeOrder');
 
             Route::post('/logout', [AuthController::class,'logout'])->name('logout');
         });

@@ -45,10 +45,14 @@
             </a>
            <div style="display:flex; gap:8px; margin-top:12px;">
              <!-- Cart Toggle Button -->
-            <button class="cart-btn {{ $product->wishlistedBy->contains('user_id', auth()->id()) ? 'added' : '' }}" 
-                    data-product-id="{{ $product->id }}" style="padding: 0px !important;">
-                {{ $product->wishlistedBy->contains('user_id', auth()->id()) ? 'Added!' : 'Add to Cart' }}
-            </button>
+           @php
+    $isAdded = $product->wishlists->isNotEmpty();
+@endphp
+
+<button class="cart-btn {{ $isAdded ? 'added' : '' }}"
+        data-product-id="{{ $product->id }}">
+    {{ $isAdded ? 'Added!' : 'Add to Cart' }}
+</button>
 
             <!-- Buy Now -->
            </div>
@@ -76,8 +80,38 @@
         <p id="detailDesc"></p>
     </div>
 </div>
+<div class="modal" id="variantModal">
+    <div class="modal-content" style="width:700px;">
+
+        <span class="close" onclick="closeModal('variantModal')">×</span>
+
+        <h3 id="modalProductName"></h3>
+        <img id="modalProductImage" style="width:120px; margin-bottom:10px;">
+
+        <table border="1" width="100%" cellpadding="6">
+            <thead>
+                <tr>
+                    <th>Color</th>
+                    <th>Size</th>
+                    <th>Gender</th>
+                    <th>Price</th>
+                    <th>Select</th>
+                </tr>
+            </thead>
+            <tbody id="variantTable"></tbody>
+        </table>
+
+        <div style="margin-top:15px; display:flex; gap:10px; justify-content:flex-end;">
+            <button onclick="closeModal('variantModal')">Close</button>
+            <button id="saveVariantsBtn">Done</button>
+        </div>
+
+    </div>
+</div>
 
 <script>
+let currentProductId = null;
+
 const productsData = {!! $productsDataJson !!} ?? {};
 
 const cardIndices = {};
@@ -180,37 +214,156 @@ function openDetail(id) {
     openModal('detailModal');
 }
 
-// Cart Toggle (Permanent via AJAX)
-document.querySelectorAll('.cart-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const productId = this.dataset.productId;
+/// ─────────────────────────────────────────────
+// Cart Toggle (Open Variant Modal)
+// ─────────────────────────────────────────────
 
-        fetch('{{ route("wishlist.toggle") }}', {
+
+document.querySelectorAll('.cart-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+
+        currentProductId = this.dataset.productId;
+        const product = productsData[currentProductId];
+
+        if (!product) {
+            alert("Product data not found");
+            return;
+        }
+
+        // safe defaults
+        const variants = product.variants || [];
+        const selected = product.selected_variants || [];
+
+        // modal header
+        document.getElementById('modalProductName').innerText = product.name || '';
+        document.getElementById('modalProductImage').src =
+            (product.images && product.images.length > 0)
+                ? product.images[0]
+                : 'https://via.placeholder.com/100';
+
+        // build table
+        let html = '';
+
+        if (variants.length === 0) {
+            html = `<tr>
+                        <td colspan="5" style="text-align:center;color:#888;">
+                            No variants found
+                        </td>
+                    </tr>`;
+        } else {
+
+            variants.forEach(v => {
+
+                const isChecked = selected.includes(v.id) ? 'checked' : '';
+
+                html += `
+                    <tr>
+                        <td>${v.color ?? '-'}</td>
+                        <td>${v.size ?? '-'}</td>
+                        <td>${v.gender ?? '-'}</td>
+                        <td>₹ ${v.price ?? 0}</td>
+                        <td>
+                            <input type="checkbox"
+                                   class="variant-check"
+                                   value="${v.id}"
+                                   ${isChecked}>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('variantTable').innerHTML = html;
+
+        openModal('variantModal');
+    });
+});
+
+
+// ─────────────────────────────────────────────
+// Save Selected Variants (Bulk Update Wishlist)
+// ─────────────────────────────────────────────
+
+document.getElementById('saveVariantsBtn').addEventListener('click', async function () {
+
+    if (!currentProductId) {
+        alert("No product selected");
+        return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerText = "Saving...";
+
+    try {
+
+        let selected = [];
+
+        document.querySelectorAll('.variant-check:checked').forEach(cb => {
+            selected.push(cb.value);
+        });
+
+        const response = await fetch('{{ route("wishlist.variant.bulk") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ product_id: productId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'added') {
-                this.textContent = 'Added!';
-                this.classList.add('added');
-            } else {
-                this.textContent = 'Add to Cart';
-                this.classList.remove('added');
-            }
-            alert(data.message);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Something went wrong!');
+            body: JSON.stringify({
+                product_id: currentProductId,
+                variants: selected
+            })
         });
-    });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to update wishlist');
+        }
+
+        // close modal
+        closeModal('variantModal');
+
+        // update UI button state
+        const btnEl = document.querySelector(`.cart-btn[data-product-id="${currentProductId}"]`);
+
+        if (btnEl) {
+            if (selected.length > 0) {
+                btnEl.classList.add('added');
+                btnEl.innerText = "Added!";
+            } else {
+                btnEl.classList.remove('added');
+                btnEl.innerText = "Add to Cart";
+            }
+        }
+        window.location.reload();
+            
+        // success popup
+        Swal.fire({
+            icon: 'success',
+            title: 'Updated',
+            text: selected.length > 0
+                ? 'Variants added to wishlist'
+                : 'Wishlist cleared for this product',
+            timer: 1500,
+            showConfirmButton: false
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.message || 'Something went wrong'
+        });
+
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Done";
+    }
 });
 </script>
 @endsection

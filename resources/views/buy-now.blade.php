@@ -53,7 +53,7 @@
     </div>
 
     <!-- Order Form -->
-    <form id="orderForm" method="POST" action="{{ route('order.place', $product->id) }}">
+    <form id="orderForm" method="POST" action="{{ route('payment.process', $product->id) }}">
         @csrf
         <input type="hidden" name="variant_id" id="hiddenVariantId" value="{{ $variantId }}">
         <input type="hidden" name="quantity" id="hiddenQuantity" value="{{ $quantity }}">
@@ -80,9 +80,13 @@
         </div>
 
         <div id="onlinePaymentFields" style="display:none; margin-top:15px;">
-            <input type="text" name="card_number" placeholder="Card Number" maxlength="16" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:white;">
-            <input type="text" name="card_expiry" placeholder="Expiry (MM/YY)" maxlength="5" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:white;">
-            <input type="text" name="card_cvv" placeholder="CVV" maxlength="3" style="width:100%; padding:12px; margin-bottom:12px; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:white;">
+    
+            <div id="card-element" 
+                style="width:100%; padding:12px; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:white;">
+            </div>
+
+            <div id="card-errors" style="color:red; margin-top:10px;"></div>
+
         </div>
 
         <label style="display:block; margin-bottom:20px; color:#ddd;">
@@ -95,6 +99,43 @@
         </div>
     </form>
 </div>
+
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+const stripe = Stripe("{{ env('STRIPE_KEY') }}");
+const elements = stripe.elements();
+
+const card = elements.create('card', {
+    style: {
+        base: {
+            color: '#ffffff',
+            fontSize: '16px',
+            '::placeholder': {
+                color: '#aaa'
+            }
+        }
+    }
+});
+
+let cardMounted = false;
+
+document.querySelectorAll('input[name="payment_mode"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+
+        const isOnline = this.value === 'online';
+        const container = document.getElementById('onlinePaymentFields');
+
+        container.style.display = isOnline ? 'block' : 'none';
+
+        //  Mount only once when visible
+        if (isOnline && !cardMounted) {
+            card.mount('#card-element');
+            cardMounted = true;
+        }
+    });
+});
+</script>
 
 <script>
 const variants = @json($product->variants);
@@ -147,6 +188,47 @@ document.querySelectorAll('input[name="payment_mode"]').forEach(radio => {
     radio.addEventListener('change', function() {
         document.getElementById('onlinePaymentFields').style.display = this.value === 'online' ? 'block' : 'none';
     });
+});
+
+const form = document.getElementById('orderForm');
+
+let processing = false;
+
+form.addEventListener('submit', async function(e) {
+
+    if (processing) return;
+
+    const paymentMode = document.querySelector('input[name="payment_mode"]:checked').value;
+
+    if (paymentMode !== 'online') {
+        return true;
+    };
+
+    e.preventDefault();
+    processing = true;
+
+    document.getElementById('confirmBtn').disabled = true;
+
+    const {paymentMethod, error} = await stripe.createPaymentMethod({
+        type: 'card',
+        card: card,
+    });
+
+    if (error) {
+        processing = false;
+        document.getElementById('confirmBtn').disabled = false;
+        document.getElementById('card-errors').textContent = error.message;
+        return;
+    }
+
+    let input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payment_method_id';
+    input.value = paymentMethod.id;
+
+    form.appendChild(input);
+
+    form.submit();
 });
 </script>
 @endsection

@@ -25,8 +25,10 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerOrderController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MyCartController;
 use App\Http\Controllers\NotifyMeController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductRatingController;
 use App\Http\Controllers\StripeConnectController;
@@ -104,10 +106,6 @@ use Intervention\Image\ImageManager;
         ->name('customer.list');
 
     Route::get('/all-products', [AdminProductViewContoller::class, 'allProducts'])->name('all-products');
-
-    Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
-
-    Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist');
 
     Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])->name('buy.now');
     Route::post('/buy-now/{product}', [OrderController::class, 'placeOrder'])->name('order.place');
@@ -199,16 +197,26 @@ use Intervention\Image\ImageManager;
             Route::post('/product/rate', [ProductRatingController::class, 'store'])->name('product.rate.store');
             Route::post('/upload-image', [ProductRatingController::class, 'uploadImage'])->name('image.upload');
             Route::match(['get','post'],'/generate-review-image', [ProductRatingController::class, 'generateReviewImage'])
-    ->name('generate.review.image');
-    Route::get('/share-review/{filename}', [ProductRatingController::class, 'shareReview'])->name('share.review');
+            ->name('generate.review.image');
+            Route::get('/share-review/{filename}', [ProductRatingController::class, 'shareReview'])->name('share.review');
   
-Route::get('/gd-check', function () {
-    return [
-        'gd_loaded' => extension_loaded('gd'),
-        'gd_info' => function_exists('gd_info') ? gd_info() : 'missing',
-    ];
-});
+            Route::get('/gd-check', function () {
+                return [
+                    'gd_loaded' => extension_loaded('gd'),
+                    'gd_info' => function_exists('gd_info') ? gd_info() : 'missing',
+                ];
+            });
 
+            Route::post('/payment/{product}', [PaymentController::class, 'process'])->name('payment.process');
+            Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
+            Route::get('/payment/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
+           Route::get('/my-cart', [MyCartController::class, 'myCart'])->name('my_cart');
+           Route::post('/clear-cart', [MyCartController::class, 'clear'])->name('cart.clear');
+               Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+    Route::post('/wishlist/variants/bulk', [WishlistController::class, 'bulk'])
+    ->name('wishlist.variant.bulk');
+
+    Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist','my_cart');
 
 
             Route::post('/logout', [AuthController::class,'logout'])->name('logout');
@@ -225,6 +233,7 @@ Route::get('/gd-check', function () {
 
         Route::delete('/delete/{userImage}', [UserImageController::class, 'destroy'])
             ->name('delete');
+
         });
 
     

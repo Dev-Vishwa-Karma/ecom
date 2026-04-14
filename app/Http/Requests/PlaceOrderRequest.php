@@ -21,9 +21,9 @@ class PlaceOrderRequest extends FormRequest
             'mobile'         => 'required|string|max:15',
             'email'          => 'required|email',
             'payment_mode'   => 'required|in:cod,online',
-            'card_number'    => 'required_if:payment_mode,online|nullable|string|size:16',
-            'card_cvv'       => 'required_if:payment_mode,online|nullable|string|size:3',
-            'card_expiry'    => 'required_if:payment_mode,online|nullable|string|size:5',
+            // 'card_number'    => 'required_if:payment_mode,online|nullable|string|size:16',
+            // 'card_cvv'       => 'required_if:payment_mode,online|nullable|string|size:3',
+            // 'card_expiry'    => 'required_if:payment_mode,online|nullable|string|size:5',
             'declaration'    => 'required|accepted',
             'total_price'    => 'required|numeric|min:0',
         ];

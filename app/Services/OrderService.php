@@ -20,6 +20,7 @@ class OrderService
             throw new \Exception('Requested quantity exceeds available stock');
         }
 
+
         $order = Order::create([
             'product_id'     => $product->id,
             'variant_id'     => $variant->id,
@@ -33,12 +34,15 @@ class OrderService
             'mobile'         => $validated['mobile'],
             'email'          => $validated['email'],
             'payment_mode'   => $validated['payment_mode'],
-            'card_number'    => $validated['payment_mode'] === 'online' ? encrypt($validated['card_number']) : null,
-            'card_cvv'       => $validated['payment_mode'] === 'online' ? encrypt($validated['card_cvv']) : null,
-            'card_expiry'    => $validated['payment_mode'] === 'online' ? $validated['card_expiry'] : null,
+            // 'card_number'    => $validated['payment_mode'] === 'online' ? encrypt($validated['card_number']) : null,
+            // 'card_cvv'       => $validated['payment_mode'] === 'online' ? encrypt($validated['card_cvv']) : null,
+            // 'card_expiry'    => $validated['payment_mode'] === 'online' ? $validated['card_expiry'] : null,
             'dispatch_date'  => now()->addDays(3),
             'status'         => 'pending',
             'order_date'     => now(),
+            'payment_status' => 'pending',
+            'order_number' => 'ORD-' . strtoupper(uniqid()),
+
         ]);
 
     $variant->decrement('quantity', $validated['quantity']);

@@ -53,7 +53,7 @@
     </div>
 
     <!-- Order Form -->
-    <form id="orderForm" method="POST" action="{{ route('payment.process', $product->id) }}">
+    <form id="orderForm" method="POST" action="{{ route('order.place', $product->id) }}">
         @csrf
         <input type="hidden" name="variant_id" id="hiddenVariantId" value="{{ $variantId }}">
         <input type="hidden" name="quantity" id="hiddenQuantity" value="{{ $quantity }}">

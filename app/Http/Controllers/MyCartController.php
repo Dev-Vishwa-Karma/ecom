@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class MyCartController extends Controller
 {
@@ -45,6 +46,25 @@ public function clear()
     return response()->json([
         'success' => true,
         'message' => 'Cart cleared'
+    ]);
+}
+
+public function storeSession(Request $request)
+{
+    $items = $request->items;
+
+    if (!$items || count($items) == 0) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Cart empty'
+        ], 422);
+    }
+
+    Session::put('cart_checkout', $items);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Cart stored'
     ]);
 }
 }

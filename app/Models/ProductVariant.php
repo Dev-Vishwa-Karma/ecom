@@ -34,4 +34,5 @@ public function images()
 {
     return $this->hasMany(Wishlist::class, 'product_id');
 }
+
 }

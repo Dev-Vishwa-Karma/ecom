@@ -61,8 +61,12 @@
                     <div>
                         <button class="remove-btn" data-product-id="{{ $wishlist->product_id }}"
                         data-variant-id="{{ $wishlist->variant_id }}">Remove</button>
-                        <button>Buy Now</button>
-                    </div>
+                    <button class="buy-now"
+                        data-product-id="{{ $wishlist->product_id }}"
+                        data-variant-id="{{ $wishlist->variant_id }}">
+                        Buy Now
+                    </button>    
+                                </div>
                 </div>
             </div>
         </div>
@@ -76,7 +80,7 @@
     <h4>Total: ₹ <span id="cart-total">0.00</span></h4>
     <div>
         <button id="remove-all">Remove All</button>
-        <button>Buy All</button>
+        <button id="buy-all">Buy All</button>
     </div>
 </div>
 
@@ -85,41 +89,57 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    // =========================
+    // UPDATE TOTAL
+    // =========================
     function updateTotal() {
         let total = 0;
+
         document.querySelectorAll('.cart-item').forEach(item => {
             const basePrice = parseFloat(item.querySelector('.item-price').dataset.basePrice) || 0;
             const qty = parseInt(item.querySelector('.qty-input').value) || 1;
+
             total += basePrice * qty;
 
-            // Update displayed price for this row
             item.querySelector('.item-price').innerText = (basePrice * qty).toFixed(2);
         });
-        document.getElementById('cart-total').innerText = total.toFixed(2);
+
+        const totalEl = document.getElementById('cart-total');
+        if (totalEl) {
+            totalEl.innerText = total.toFixed(2);
+        }
     }
 
+    // =========================
+    // QUANTITY BUTTONS
+    // =========================
     document.querySelectorAll('.cart-item').forEach(item => {
+
         const minus = item.querySelector('.minus');
         const plus = item.querySelector('.plus');
         const input = item.querySelector('.qty-input');
 
-        minus.addEventListener('click', () => {
-            let val = parseInt(input.value) || 1;
-            if (val > 1) input.value = val - 1;
-            updateTotal();
-        });
+        if (minus && plus && input) {
 
-        plus.addEventListener('click', () => {
-            let val = parseInt(input.value) || 1;
-            input.value = val + 1;
-            updateTotal();
-        });
+            minus.addEventListener('click', () => {
+                let val = parseInt(input.value) || 1;
+                if (val > 1) input.value = val - 1;
+                updateTotal();
+            });
+
+            plus.addEventListener('click', () => {
+                let val = parseInt(input.value) || 1;
+                input.value = val + 1;
+                updateTotal();
+            });
+        }
     });
 
+    // =========================
+    // REMOVE ITEM
+    // =========================
     document.querySelectorAll('.remove-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-        const productId = this.dataset.productId;
-        const variantId = this.dataset.variantId;
+        btn.addEventListener('click', function () {
 
             fetch('{{ route("wishlist.toggle") }}', {
                 method: 'POST',
@@ -128,10 +148,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({       
-                product_id: productId,
-                variant_id: variantId
- })
+                body: JSON.stringify({
+                    product_id: this.dataset.productId,
+                    variant_id: this.dataset.variantId
+                })
             })
             .then(res => res.json())
             .then(() => {
@@ -141,18 +161,84 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.getElementById('remove-all').addEventListener('click', function() {
-        fetch('{{ route("cart.clear") }}', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-        })
-        .then(res => res.json())
-        .then(() => {
-            document.querySelector('.mycartcontainer').innerHTML = '';
-            updateTotal();
+    // =========================
+    // REMOVE ALL
+    // =========================
+    const removeAllBtn = document.getElementById('remove-all');
+    if (removeAllBtn) {
+        removeAllBtn.addEventListener('click', function () {
+
+            fetch('{{ route("cart.clear") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(() => {
+                document.querySelector('.mycartcontainer').innerHTML = '';
+                updateTotal();
+            });
+        });
+    }
+
+    // =========================
+    // BUY NOW
+    // =========================
+    document.querySelectorAll('.buy-now').forEach(btn => {
+        btn.addEventListener('click', function () {
+
+            const productId = this.dataset.productId;
+            const variantId = this.dataset.variantId;
+
+            window.location.href =
+                `/buy-now/${productId}?variant_id=${variantId}&quantity=1`;
         });
     });
 
+    // =========================
+    // BUY ALL
+    // =========================
+    const buyAllBtn = document.getElementById('buy-all');
+
+    if (buyAllBtn) {
+        buyAllBtn.addEventListener('click', function () {
+
+            let items = [];
+
+            document.querySelectorAll('.cart-item').forEach(item => {
+
+                const productId = item.querySelector('.remove-btn')?.dataset.productId;
+                const variantId = item.querySelector('.remove-btn')?.dataset.variantId;
+                const qty = item.querySelector('.qty-input')?.value || 1;
+
+                if (productId && variantId) {
+                    items.push({
+                        product_id: productId,
+                        variant_id: variantId,
+                        quantity: qty
+                    });
+                }
+            });
+
+            fetch('/cart/session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ items })
+            })
+            .then(res => res.json())
+            .then(() => {
+                window.location.href = '/cart/checkout';
+            });
+        });
+    }
+
+    // INIT
     updateTotal();
 });
 </script>

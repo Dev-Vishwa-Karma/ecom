@@ -4,17 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\SellerOrder;
 
 class Order extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'product_id','variant_id', 'user_id', 'seller_id', 'price','quantity',    'total_price',   
-        'customer_name', 'address', 'mobile', 'email',
-        'payment_mode', 'payment_status','order_number', 'card_number', 'card_cvv', 'card_expiry',
-        'dispatch_date', 'status', 'order_date'
+        'user_id',
+        'customer_name',
+        'address',
+        'mobile',
+        'email',
+        'payment_mode',
+        'payment_status',
+        'status',
+        'order_number',
+        'order_date',
     ];
+
     protected $casts = [
     'order_date'    => 'datetime',
     'dispatch_date' => 'datetime',
@@ -44,4 +52,13 @@ public function products()
 {
     return $this->belongsTo(Product::class); // or the correct relationship type, if using pivot tables
 }
+public function items()
+{
+    return $this->hasMany(OrderItem::class);    
+
+}
+ public function sellerOrders()
+    {
+        return $this->hasMany(SellerOrder::class);
+    }
 }

@@ -1,239 +1,134 @@
 @extends('layouts.app')
 
 @section('title', 'My Orders')
+
+<link rel="stylesheet" href="{{ asset('css/order-table.css') }}">
+
 <style>
 .star-rating {
     display: flex;
     gap: 5px;
     font-size: 28px;
     cursor: pointer;
-    color: #ccc; /* empty stars */
+    color: #ccc;
 }
-
 .star-rating .star.filled {
-    color: #ffcc00; /* filled stars */
+    color: #ffcc00;
 }
-</style>
-
-<link rel="stylesheet" href="{{ asset('css/order-table.css') }}">
-
-<style>
-    .star-rating {
-        display: flex;
-        gap: 5px;
-        font-size: 28px;
-        cursor: pointer;
-        color: #ccc;
-    }
-
-    .star-rating .star.filled {
-        color: #ffcc00;
-    }
-
-    .capture-area {
-        padding: 15px;
-        background: #212529;
-        color: #fff;
-    }
-
-    .form-control:focus {
-        border-color: #ff8c00 !important;
-        outline: none !important;
-        box-shadow: 0 0 5px #ff8c00 !important;
-    }
+.capture-area {
+    padding: 15px;
+    background: #212529;
+    color: #fff;
+}
+.form-control:focus {
+    border-color: #ff8c00 !important;
+    outline: none !important;
+    box-shadow: 0 0 5px #ff8c00 !important;
+}
 </style>
 
 @section('content')
 
-
-    <h2 style="color:#ff8c00;text-align:center;margin-bottom:30px;">My Orders</h2>
-
-    @forelse($orders as $order)
-
-    <div class="order-card">
-
-        <div class="order-header">
-            <h4>Order #{{ $order->id }}</h4>
 <h2 style="color:#ff8c00;text-align:center;margin-bottom:30px;">My Orders</h2>
 
-@if(session('success'))<div style="background:#1a3a1a;color:#4dff88;padding:12px;border-radius:8px;margin-bottom:20px;text-align:center;">
-{{ session('success') }}</div>
+@if(session('success'))
+<div style="background:#1a3a1a;color:#4dff88;padding:12px;border-radius:8px;margin-bottom:20px;text-align:center;">
+    {{ session('success') }}
+</div>
 @endif
 
-            <span class="status-badge status-{{ $order->status }}">
-                {{ ucfirst($order->status) }}
-            </span>
+@forelse($orders as $order)
 
-            <div class="d-flex flex-column gap-2">
+<div class="order-card" style="padding:15px;margin-bottom:15px;background:#1e1e1e;border-radius:10px;">
 
-                <a href="{{ route('invoice', $order->id) }}" class="view-invoice-btn">
-                    View Invoice
-                </a>
+    {{-- HEADER --}}
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h4 style="color:#fff;">Order #{{ $order->order_number }}</h4>
 
-                @if ($order->status === 'delivered')
-                <a href="#"
-                    class="view-invoice-btn rate-btn"
-                    data-product-id="{{ $order->product->id }}"
-                    data-variant-id="{{ $order->variant->id ?? '' }}"
-                    data-product-name="{{ $order->product->name }}"
-                    data-variant="{{ $order->variant->color ?? '' }} {{ $order->variant->size ?? '' }}"
-                    data-price="{{ $order->price }}">
-                    Rate Product
-                </a>
-                @endif
-
-            </div>
-        </div>
-
-        <div class="order-info">
-            <p>
-                <strong>Product:</strong>
-                {{ $order->product->name ?? 'N/A' }}
-            </p>
-<div class="order-header">
-<h4 style="color:#fff;margin:0;">Order #{{ $order->id }}</h4>
-<span class="status-badge status-{{ $order->status }}">{{ ucfirst($order->status) }}</span>
-<div class="d-flex flex-column gap-2">
-    <a href="{{ route('invoice', $order->id) }}" class="view-invoice-btn">View Invoice</a>  
-               
-@if ($order->status === 'delivered')
-    <a href="#" class="view-invoice-btn" data-bs-toggle="modal" data-bs-target="#rateProductModal-{{ $order->product->id }}">
-        Rate Product
-    </a>
-@endif
-</div>
-
-            <p>
-                <strong>Variant:</strong>
-                {{ $order->variant->color ?? '-' }},
-                {{ $order->variant->size ?? '-' }},
-                {{ $order->variant->gender ?? '-' }}
-            </p>
-
-            <p>
-                <strong>Price Per Item:</strong>
-                ₹ {{ number_format($order->price,2) }}
-            </p>
-
-            <p>
-                <strong>Quantity:</strong>
-                {{ $order->quantity }}
-            </p>
-
-            <p>
-                <strong>Total Price:</strong>
-                ₹ {{ number_format($order->total_price,2) }}
-            </p>
-
-            <p>
-                <strong>Payment Mode:</strong>
-                {{ ucfirst($order->payment_mode) }}
-            </p>
-
-            <p>
-                <strong>Order Date:</strong>
-                {{ $order->order_date?->format('d M Y h:i A') }}
-            </p>
-
-            <p>
-                <strong>Dispatch Date:</strong>
-                {{ $order->dispatch_date?->format('d M Y') ?? 'Not yet dispatched' }}
-            </p>
-<div class="order-info">
-
-<p><strong>Product:</strong>{{ $order->product->name ?? 'N/A' }}</p>
-
-<p><strong>Variant:</strong>{{ $order->variant->color ?? '-' }},{{ $order->variant->size ?? '-' }},{{ $order->variant->gender ?? '-' }}</p>
-
-<p><strong>Price Per Item:</strong>₹ {{ number_format($order->price,2) }}</p>
-
-<p><strong>Quantity:</strong>{{ $order->quantity }}</p>
-
-<p><strong>Total Price:</strong>₹ {{ number_format($order->total_price,2) }}</p>
-
-<p><strong>Payment Mode:</strong>{{ ucfirst($order->payment_mode) }}</p>
-
-<p><strong>Order Date:</strong>{{ $order->order_date?->format('d M Y h:i A') }}</p>
-
-<p><strong>Dispatch Date:</strong>{{ $order->dispatch_date?->format('d M Y') ?? 'Not yet dispatched' }}</p>
-
-<p><strong>Customer Name:</strong>{{ $order->customer_name }}</p>
-
-<p><strong>Mobile:</strong>{{ $order->mobile }}</p>
-
-<p><strong>Email:</strong>{{ $order->email }}</p>
-
-</div>
-
-
-<div class="address-box"><strong>Delivery Address:</strong><br>{{ $order->address }}</div>
-
-</div>
-
-            <p>
-                <strong>Customer Name:</strong>
-                {{ $order->customer_name }}
-            </p>
-
-            <p>
-                <strong>Mobile:</strong>
-                {{ $order->mobile }}
-            </p>
-
-            <p>
-                <strong>Email:</strong>
-                {{ $order->email }}
-            </p>
-
-        </div>
-<div style="text-align:center;padding:60px;background:#1e1e1e;border-radius:12px;color:#aaa;">
-<p style="font-size:1.3em;margin-bottom:15px;">No orders found yet</p>
-<a href="{{ route('all-products') }}" style="color:#ff8c00;font-weight:bold;text-decoration:none;">Start Shopping →</a>
-</div>
-
-
-        <div class="address-box">
-            <strong>Delivery Address:</strong><br>
-            {{ $order->address }}
-        </div>
+        <span style="padding:5px 10px;border-radius:6px;background:#333;color:#ffcc00;">
+            {{ ucfirst($order->status) }}
+        </span>
     </div>
 
+    <hr style="border-color:#333;">
+
+    {{-- DETAILS --}}
+    <p><strong>Payment Mode:</strong> {{ ucfirst($order->payment_mode) }}</p>
+    <p><strong>Total Amount:</strong> ₹{{ number_format($order->total_amount, 2) }}</p>
+    <p><strong>Order Date:</strong> {{ $order->order_date?->format('d M Y h:i A') }}</p>
+
+    <p>
+        <strong>Address:</strong><br>
+        {{ $order->address }}
+    </p>
+
+    {{-- ACTIONS --}}
+    <div style="margin-top:15px;display:flex;gap:10px;">
+
+        {{-- INVOICE --}}
+        <a href="{{ route('invoice', $order->id) }}"
+           style="padding:8px 14px;background:#ff8c00;color:#000;border-radius:6px;text-decoration:none;">
+            View Invoice
+        </a>
+
+        {{-- RATE BUTTON (ONLY DELIVERED) --}}
+        @if($order->status === 'delivered')
+        <a href="#"
+        style="text-decoration: none; color: black; background: #ff8c00; padding: 8px 14px; border-radius: 6px;"
+        class="rate-btn"
+        data-product-id="{{ $order->items->first()->product_id }}"
+        data-variant-id="{{ $order->items->first()->variant_id }}"
+        data-product-name="{{ $order->items->first()->product->name ?? '' }}"
+        data-variant="{{ $order->items->first()->variant->color ?? '' }} {{ $order->items->first()->variant->size ?? '' }}"
+        data-price="{{ $order->items->first()->variant->price ?? 0 }}">
+            Rate Order
+        </a>
+        @endif
+        @if ($order->status === 'pending'|| $order->status==='processing')
+            <a href="#" 
+                style="text-decoration: none; color: black; background: #ff8c00; padding: 8px 14px; border-radius: 6px;"
+                data-order-id="{{ $order->id }}"
+                data-bs-toggle="modal" 
+                data-bs-target="#cancelOrderModal"
+                class="cancelBtn"
+                >
+                Cancel Order
+            </a>
+        
+        @endif 
+
+    </div>
+
+</div>
 
 @empty
-<p>No orders found</p>
+<div style="text-align:center;color:#aaa;padding:50px;">
+    No orders found
+</div>
 @endforelse
-@foreach ($orders as $order)
-    @if ($order->status === 'delivered')
-        @include('product-rate-model', [
-            'productId' => $order->product->id,
-            'variantId' => $order->variant->id ?? null,
-            'ratingValue' => 0, 
-            'commentValue' => '', 
-        ])
-    @endif
-@endforeach
 
-{{-- SINGLE MODAL --}}
+<div class="pagination">{{ $orders->links() }}</div>
+
+
+{{-- Include rate modals only for delivered orders --}}
+
+
+{{-- Single modal for rating --}}
 <div class="modal fade" id="rateProductModal" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('product.rate.store') }}" class="modal-content">
             @csrf
-
             <input type="hidden" id="modalProductId" name="product_id">
             <input type="hidden" id="modalVariantId" name="variant_id">
-
             <div class="modal-header justify-content-between">
                 <h5>Rate Product</h5>
                 <button type="button" data-bs-dismiss="modal">×</button>
             </div>
-
             <div class="modal-body">
-
                 <div id="capture-area" class="capture-area">
                     <strong id="modalProductName"></strong><br>
                     <strong id="modalVariant"></strong><br>
                     <strong id="modalPrice"></strong>
-
                     <div class="mt-3">
                         <div class="star-rating" id="starContainer">
                             <span class="star" data-value="1">★</span>
@@ -244,24 +139,18 @@
                         </div>
                         <input type="hidden" name="rating" id="ratingInput" required>
                     </div>
-
                     <textarea name="comment" class="form-control mt-3"></textarea>
-
                 </div>
-
             </div>
-
             <div class="modal-footer">
                 <button type="submit">Submit</button>
                 <button type="button" id="fb-share-btn">Share</button>
             </div>
-
         </form>
     </div>
 </div>
 
-<!-- FB Confirmation Modal -->
-<!-- Confirmation Modal -->
+{{-- FB Confirmation Modal --}}
 <div class="modal fade" id="fbConfirmModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -280,27 +169,146 @@
     </div>
 </div>
 
-@endsection
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body">
+
+                <input type="hidden" id="cancelOrderId">
+
+                <label><input type="radio" name="reason" value="better_price"> Better Price</label><br>
+                <label><input type="radio" name="reason" value="not_needed"> Not Needed</label><br>
+                <label><input type="radio" name="reason" value="mistake"> Mistake</label><br>
+                <label><input type="radio" name="reason" value="other" id="otherRadio"> Other</label>
+
+                <textarea id="otherText" class="form-control mt-2"
+                    placeholder="Write reason..." style="display:none;"></textarea>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Go Back
+                </button>
+
+                <button type="button" class="btn btn-danger" id="confirmCancelBtn">
+                    Submit Cancellation
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-        const modalEl = document.getElementById('rateProductModal');
-        const modal = new bootstrap.Modal(modalEl);
+    let selectedOrderId = null;
 
-        document.querySelectorAll('.rate-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
+    document.querySelectorAll('.cancelBtn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            selectedOrderId = this.dataset.orderId;
+        });
+    });
 
-                document.getElementById('modalProductId').value = this.dataset.productId;
-                document.getElementById('modalVariantId').value = this.dataset.variantId;
+    // show textarea
+    document.getElementById('otherRadio').addEventListener('change', function () {
+        document.getElementById('otherText').style.display = 'block';
+    });
 
-                document.getElementById('modalProductName').innerText = "Product: " + this.dataset.productName;
-                document.getElementById('modalVariant').innerText = "Variant: " + this.dataset.variant;
-                document.getElementById('modalPrice').innerText = "Price: ₹" + this.dataset.price;
+    document.querySelectorAll('input[name="reason"]').forEach(r => {
+        if (r.value !== 'other') {
+            r.addEventListener('change', function () {
+                document.getElementById('otherText').style.display = 'none';
+            });
+        }
+    });
+
+    // confirm cancel
+    document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+
+        let reason = document.querySelector('input[name="reason"]:checked');
+
+        if (!reason) {
+            alert("Select reason");
+            return;
+        }
+
+        let finalReason = reason.value;
+
+        if (reason.value === 'other') {
+            finalReason = document.getElementById('otherText').value;
+        }
+
+        fetch("{{ route('order.cancel') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                order_id: selectedOrderId,
+                reason: finalReason
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            location.reload();
+        });
+    });
+
+});   
+
+document.addEventListener('DOMContentLoaded', function () {
+
+
+
+    const modalEl = document.getElementById('rateProductModal');
+    const modal = new bootstrap.Modal(modalEl);
+
+    
+
+    document.querySelectorAll('.rate-btn').forEach(btn => {
+
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const productId = this.dataset.productId;
+            const variantId = this.dataset.variantId;
+
+            if (!productId || !variantId) {
+                console.log("Missing dataset:", this.dataset);
+                alert("Data missing on button");
+                return;
+            }
+
+            document.getElementById('modalProductId').value = productId;
+            document.getElementById('modalVariantId').value = variantId;
+
+            document.getElementById('modalProductName').innerText =
+                "Product: " + (this.dataset.productName || '');
+
+            document.getElementById('modalVariant').innerText =
+                "Variant: " + (this.dataset.variant || '');
+
+            document.getElementById('modalPrice').innerText =
+                "Price: ₹" + (this.dataset.price || 0);
 
                 modal.show();
             });
@@ -396,10 +404,9 @@
             fbModal.hide();
         });
 
-    });
+});
 </script>
 
+
+
 @endsection
-
-
-

@@ -33,14 +33,14 @@
                 <button class="card-next" type="button">›</button>
             </div>
 
-            <div class="menu" data-product-id="{{ $product->id }}">⋮</div>
+           
             <div class="dropdown" id="menu-{{ $product->id }}">
                 <a href="#" class="view-btn" data-id="{{ $product->id }}">View</a>
             </div>
-            <a style="cursor: pointer;" onclick="window.location.href='{{ route('product.details', $product->id) }}'">
+            <a href="{{ route('product.details', $product->id) }}" style="cursor: pointer; text-decoration: none; color: unset " >
 
             <h4 style="color:#ff8c00;margin:12px 0 4px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">{{ $product->name }}</h4>
-            <p style="margin:4px 0;">₹ {{ number_format($product->variants->min('price') ?? 0, 2) }}</p>
+            <p style="margin:4px 0; ">₹ {{ number_format($product->variants->min('price') ?? 0, 2) }}</p>
             <small style="color:#aaa;">By {{ $product->user?->name ?? '—' }}</small>
             </a>
            <div style="display:flex; gap:8px; margin-top:12px;">
@@ -115,6 +115,48 @@ let currentProductId = null;
 const productsData = {!! $productsDataJson !!} ?? {};
 
 const cardIndices = {};
+
+document.querySelectorAll('.quick-buy').forEach(link => {
+    link.addEventListener('click', async function (e) {
+        e.preventDefault();
+
+        const productId = this.dataset.productId;
+
+        const product = productsData[productId];
+
+        if (!product || !product.variants.length) {
+            alert("No variant available");
+            return;
+        }
+
+        // 👉 AUTO SELECT FIRST VARIANT (simple flow)
+        const variant = product.variants[0];
+
+        let items = [{
+            product_id: productId,
+            variant_id: variant.id,
+            quantity: 1
+        }];
+
+        try {
+            await fetch('/cart/session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ items })
+            });
+
+            window.location.href = '/cart/checkout';
+
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong");
+        }
+    });
+});
 
 function openModal(id)  { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }

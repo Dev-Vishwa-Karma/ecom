@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Services\AdminOrderService;
+use Error;
 use Illuminate\Http\Request;
 
 class AdminOrderController extends Controller
@@ -23,10 +24,13 @@ class AdminOrderController extends Controller
 
     public function updateStatus(UpdateOrderStatusRequest $request)
     {
-        $this->orderService->updateStatus($request->validated());
+         $this->orderService->updateOrderStatusBySeller(
+        $request->order_id,
+        $request->status
+    );
 
-        return response()->json([
-            'message' => 'Status updated successfully'
-        ]);
+    return response()->json([
+        'message' => 'Order status updated successfully'
+    ]);
     }
 }

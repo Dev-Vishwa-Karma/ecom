@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\OrderItem;
 use App\Models\Product;
+use App\Observers\OrderItemObserver;
 use App\Observers\ProductObserver;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
             Product::observe(ProductObserver::class);
+                OrderItem::observe(OrderItemObserver::class);
+
 
         if (app()->environment('local')) {
         URL::forceScheme('https');

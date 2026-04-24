@@ -31,121 +31,124 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductRatingController;
+use App\Http\Controllers\SellerRevenueController;
 use App\Http\Controllers\StripeConnectController;
+use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UserImageController;
 use Intervention\Image\ImageManager;
 
-    Route::get('/', [DashboardRedirectController::class, 'redirect']);
+        Route::get('/', [DashboardRedirectController::class, 'redirect']);
 
-    Route::post('/login', [AuthController::class,'apiLogin']);
-    Route::post('/register', [AuthController::class,'apiRegister']);
-    Route::middleware('auth:api')->group(function(){
+        Route::post('/login', [AuthController::class,'apiLogin']);
+        
+        Route::post('/register', [AuthController::class,'apiRegister']);
+        
+        Route::middleware('auth:api')->group(function(){
 
         Route::get('/profile', function(){
-            return auth()->user();
+                return auth()->user();
+            });
+
         });
+        Route::post('/save-fcm', [App\Http\Controllers\FcmController::class, 'store'])->middleware('auth');
 
-    });
-    Route::post('/save-fcm', [App\Http\Controllers\FcmController::class, 'store'])
-    ->middleware('auth');
+        Route::middleware('guest')->group(function () {
 
-    Route::middleware('guest')->group(function () {
+        Route::get('/register', [AuthController::class,'showRegister'])->name('register');
+        Route::post('/register', [AuthController::class,'register']);
 
-    Route::get('/register', [AuthController::class,'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class,'register']);
+        Route::get('/login', [AuthController::class,'showLogin'])->name('login');
 
-    Route::get('/login', [AuthController::class,'showLogin'])->name('login');
+        // uncomment this if you want to use JWT token based login for API
+        // Route::post('/login', [AuthController::class,'apiLogin']);
 
-    // uncomment this if you want to use JWT token based login for API
-    // Route::post('/login', [AuthController::class,'apiLogin']);
-
-    Route::post('/login', [AuthController::class,'login']);
-    });
+        Route::post('/login', [AuthController::class,'login']);});
+        
         Route::get('/auth/{provider}', [AuthController::class, 'redirectToProvider'])->name('social.redirect');
-    Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback'])->name('social.callback');
+        
+        Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback'])->name('social.callback');
 
 
-    Route::middleware(['auth','role:super_admin'])->group(function () {
-    Route::get('/super/dashboard', function () {
+        Route::middleware(['auth','role:super_admin'])->group(function () {
+        
+        Route::get('/super/dashboard', function () {
 
         $users = \App\Models\User::paginate(10);
 
         return view('super.dashboard', compact('users'));
-    })->name('super.dashboard');
+        })->name('super.dashboard');
 
 
 
-    Route::get('/super/profile', function () {
+        Route::get('/super/profile', function () {
         return view('super.profile');
-    })->name('super.profile');
+        })->name('super.profile');
 
-    Route::get('/super/admins', [AdminController::class,'adminList'])
-        ->name('super.admin.list');
+        Route::get('/super/admins', [AdminController::class,'adminList'])->name('super.admin.list');
 
-    Route::get('/super/admin/create', [AdminController::class,'showAdminCreate'])
-        ->name('super.admin.create');
+        Route::get('/super/admin/create', [AdminController::class,'showAdminCreate'])->name('super.admin.create');
 
-    Route::post('/super/admin/store', [AdminController::class,'storeAdmin'])
-        ->name('super.admin.store');
+        Route::post('/super/admin/store', [AdminController::class,'storeAdmin'])->name('super.admin.store');
 
-    Route::get('/super/admin/view/{id}', [AdminController::class,'viewAdmin'])
-        ->name('super.admin.view');
+        Route::get('/super/admin/view/{id}', [AdminController::class,'viewAdmin'])->name('super.admin.view');
 
-    Route::get('/super/admin/edit/{id}', [AdminController::class,'editAdmin'])
-        ->name('super.admin.edit');
+        Route::get('/super/admin/edit/{id}', [AdminController::class,'editAdmin'])->name('super.admin.edit');
 
-    Route::post('/super/admin/update/{id}', [AdminController::class,'updateAdmin'])
-        ->name('super.admin.update');
-    Route::post('/admin/{id}/deactivate', [AdminController::class, 'deactivateAdmin'])->name('super.admin.deactivate');
+        Route::post('/super/admin/update/{id}', [AdminController::class,'updateAdmin'])->name('super.admin.update');
+        
+        Route::post('/admin/{id}/deactivate', [AdminController::class, 'deactivateAdmin'])->name('super.admin.deactivate');
 
-    Route::post('/super/admin/delete/{id}', [AdminController::class,'deleteAdmin'])
-        ->name('super.admin.delete');
+        Route::post('/super/admin/delete/{id}', [AdminController::class,'deleteAdmin'])->name('super.admin.delete');
 
-    Route::get('/customer/list', [CustomerController::class,'customerList'])
-        ->name('customer.list');
+        Route::get('/customer/list', [CustomerController::class,'customerList'])->name('customer.list');
 
-    Route::get('/all-products', [AdminProductViewContoller::class, 'allProducts'])->name('all-products');
+        Route::get('/all-products', [AdminProductViewContoller::class, 'allProducts'])->name('all-products');
 
-    Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])->name('buy.now');
-    Route::post('/buy-now/{product}', [OrderController::class, 'placeOrder'])->name('order.place');
+        Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])->name('buy.now');
+        
+        Route::post('/buy-now/{product}', [OrderController::class, 'placeOrder'])->name('order.place');
 
-});
+        });
 
-        Route::middleware(['auth', 'role:admin'])
-        ->prefix('admin')
-        ->name('admin.')
-        ->group(function () {
+        Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
 
         // Dashboard & Profile
         // Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
-        Route::get('/dashboard', [NotifyMeController::class, 'adminDemandReport'])
-        ->name('dashboard')
-        ->middleware(['auth', 'role:admin']);
+        
+        Route::get('/dashboard', [NotifyMeController::class, 'adminDemandReport' , ])->name('dashboard')->middleware(['auth', 'role:admin']);
 
         Route::get('/stripe/connect', [StripeConnectController::class, 'createAccount'])->name('stripe.connect');
 
-    Route::get('/stripe/return', [StripeConnectController::class, 'return'])->name('stripe.return');
+        Route::get('/stripe/return', [StripeConnectController::class, 'return'])->name('stripe.return');
 
-    Route::get('/stripe/retry', [StripeConnectController::class, 'retry'])->name('stripe.retry');
+        Route::get('/stripe/retry', [StripeConnectController::class, 'retry'])->name('stripe.retry');
 
-    Route::get('/stripe/status', [StripeConnectController::class, 'status'])->name('stripe.status');
+        Route::get('/stripe/status', [StripeConnectController::class, 'status'])->name('stripe.status');
 
 
         Route::get('/profile',   fn() => view('admin.profile'))->name('profile');
 
         Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+        
         Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist');       
+        
         Route::get('/my-products', [AdminProductViewContoller::class, 'myProducts'])->name('my-products');
-        Route::match(['put', 'patch'], '/my-products/update/{product}', [ProductController::class, 'update'])
-        ->name('products.update');
+        
+        Route::match(['put', 'patch'], '/my-products/update/{product}', [ProductController::class, 'update'])->name('products.update');
+        
         Route::post('/my-products/store', [ProductController::class, 'store'])->name('products.store');
+        
         Route::post('/my-products/update/{product}', [ProductController::class, 'update'])->name('products.update');
-        Route::delete('/my-products/destroy/{product}', [ProductController::class, 'destroy'])
-        ->name('products.destroy');    
+        
+        Route::delete('/my-products/destroy/{product}', [ProductController::class, 'destroy'])->name('products.destroy');    
+        
         Route::get('/all-products', [AdminProductViewContoller::class, 'allProducts'])->name('all-products');
+        
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders');
+        
         Route::post('/orders/update-status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+        
         Route::get('/products/{product}/variants',[ProductVariantController::class,'getVariants']);
 
         Route::get('products/{product}/images', fn(\App\Models\Product $product) => $product->images)->name('products.images');
@@ -156,15 +159,21 @@ use Intervention\Image\ImageManager;
         
         Route::delete('/products/images/{publicId}', [ProductImageController::class, 'deleteImage'])->name('products.images.destroy');
         
-
         Route::get('/products/{product}/stock', [ProductVariantController::class,'addStockForm'])->name('products.stock.form');
         
         Route::post('/products/stock/store', [ProductVariantController::class,'storeStock'])->name('products.stock.store');
+        
         Route::delete('/products/variant/{variant}', [ProductVariantController::class, 'deleteVariant'])->name('products.variant.delete');
 
         Route::put('/orders/{id}/quantity', [CustomerOrderController::class,'updateQuantity'])->name('orders.updateQuantity');
 
         Route::get('/notify-details/{sellerId}', [NotifyMeController::class, 'getNotifyDetails']);
+
+        Route::get('/transactions', [StripePaymentController::class, 'stripeTransaction'])->name('transactions');
+        
+        Route::get('/stripe/export', [StripePaymentController::class, 'export'])->name('stripe.export');
+        
+        Route::get('/seller/revenue', [SellerRevenueController::class, 'index'])->name('seller.revenue');
 
         });
 
@@ -173,6 +182,7 @@ use Intervention\Image\ImageManager;
         // Route::get('/customer/dashboard', function () {
         //     return view('customer.dashboard');
         // })->name('customer.dashboard');
+        
         Route::get('/profile',   fn() => view('customer.profile'))->name('profile');
 
         Route::get('/customer/dashboard', [AdminProductViewContoller::class, 'allProducts'])->name('customer.dashboard');
@@ -181,67 +191,81 @@ use Intervention\Image\ImageManager;
 
         // Allow all authenticated users (admin + customer)
         Route::middleware('auth')->group(function () {
-            Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])->name('buy.now');
-            Route::post('/buy-now/{product}', [OrderController::class, 'placeOrder'])->name('order.place');
-            Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+        
+        Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])->name('buy.now');
+        
+        Route::post('/buy-now/{product}', [OrderController::class, 'placeOrder'])->name('order.place');
+        
+        Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
-            Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist');
-            Route::get('/my-orders', [CustomerOrderController::class, 'index'])->name('orders');
+        Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist');
+        
+        Route::get('/my-orders', [CustomerOrderController::class, 'index'])->name('orders');
             
-            Route::get('/orders/{order}/invoice', [InvoiceController::class, 'invoice'])->name('invoice');
-            Route::get('/invoice/{order}/download', [InvoiceController::class, 'downloadInvoice'])->name('invoice.download');
+        Route::get('/orders/{order}/invoice', [InvoiceController::class, 'invoice'])->name('invoice');
+        
+        Route::get('/orders/{order}/seller-invoice', [InvoiceController::class, 'sellerinvoice'])->name('seller-invoice');
+
+        Route::get('/invoice/{order}/download', [InvoiceController::class, 'downloadInvoice'])->name('invoice.download');
             
-            // Route::get('orders/{order}/invoice', [InvoiceController::class, 'invoice']);
-            Route::post('/notify-me',[NotifyMeController::class,'store'])->name('notify.store');
-            Route::get('/product/{product}', [ProductController::class, 'productDetails'])->name('product.details');
-            Route::post('/product/rate', [ProductRatingController::class, 'store'])->name('product.rate.store');
-            Route::post('/upload-image', [ProductRatingController::class, 'uploadImage'])->name('image.upload');
-            Route::match(['get','post'],'/generate-review-image', [ProductRatingController::class, 'generateReviewImage'])
-            ->name('generate.review.image');
-            Route::get('/share-review/{filename}', [ProductRatingController::class, 'shareReview'])->name('share.review');
+       // Route::get('orders/{order}/invoice', [InvoiceController::class, 'invoice']);
+
+        Route::post('/notify-me',[NotifyMeController::class,'store'])->name('notify.store');
+
+        Route::get('/product/{product}', [ProductController::class, 'productDetails'])->name('product.details');
+
+        Route::post('/product/rate', [ProductRatingController::class, 'store'])->name('product.rate.store');
+
+        Route::post('/upload-image', [ProductRatingController::class, 'uploadImage'])->name('image.upload');
+
+        Route::match(['get','post'],'/generate-review-image', [ProductRatingController::class, 'generateReviewImage'])->name('generate.review.image');
+
+        Route::get('/share-review/{filename}', [ProductRatingController::class, 'shareReview'])->name('share.review');
   
-            Route::get('/gd-check', function () {
-                return [
-                    'gd_loaded' => extension_loaded('gd'),
-                    'gd_info' => function_exists('gd_info') ? gd_info() : 'missing',
-                ];
-            });
+        // Route::get('/gd-check', function () {
+        //         return [
+        //             'gd_loaded' => extension_loaded('gd'),
+        //             'gd_info' => function_exists('gd_info') ? gd_info() : 'missing',
+        //         ];
+        // });
 
-            Route::post('/payment/{product}', [PaymentController::class, 'process'])->name('payment.process');
-            Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
-            Route::get('/payment/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
-           Route::get('/my-cart', [MyCartController::class, 'myCart'])->name('my_cart');
-           Route::post('/clear-cart', [MyCartController::class, 'clear'])->name('cart.clear');
-               Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
-    Route::post('/wishlist/variants/bulk', [WishlistController::class, 'bulk'])
-    ->name('wishlist.variant.bulk');
+        Route::post('/payment/{order}', [PaymentController::class, 'process'])->name('payment.process');  
+        
+        Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
+    
+        Route::get('/payment/cancel', [PaymentController::class, 'cancel'])->name('payment.cancel');
+    
+        Route::get('/my-cart', [MyCartController::class, 'myCart'])->name('my_cart');
+    
+        Route::post('/clear-cart', [MyCartController::class, 'clear'])->name('cart.clear');
+        
+        Route::post('/wishlist/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+        
+        Route::post('/wishlist/variants/bulk', [WishlistController::class, 'bulk'])->name('wishlist.variant.bulk');
 
-    Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist','my_cart');
+        Route::get('/my-wishlist', [WishlistController::class, 'myWishlist'])->name('my-wishlist','my_cart');
 
-/**
- * 🟢 BUY NOW
- */
-Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])
-    ->name('buy.now');
 
-Route::post('/order/place/{product}', [OrderController::class, 'placeOrder'])
-    ->name('order.place');
-    Route::get('/cart', [MyCartController::class, 'myCart'])->name('cart');
+        Route::get('/buy-now/{product}', [OrderController::class, 'showBuyForm'])->name('buy.now');
+        
+        Route::get('/checkout/{order}', [PaymentController::class, 'checkout'])->name('payment.checkout');
 
-Route::post('/cart/clear', [MyCartController::class, 'clear'])->name('cart.clear');
-Route::post('/cart/session', [MyCartController::class, 'storeSession'])
-    ->name('cart.session');
+        Route::post('/order/place/{product}', [OrderController::class, 'placeOrder'])->name('order.place');
+        
+        Route::get('/cart', [MyCartController::class, 'myCart'])->name('cart');
 
-/**
- * 🟡 CART CHECKOUT
- */
-Route::get('/cart/checkout', [OrderController::class, 'showCartCheckout'])
-    ->name('cart.checkout');
+        Route::post('/cart/clear', [MyCartController::class, 'clear'])->name('cart.clear');
 
-Route::post('/cart/place-order', [OrderController::class, 'placeCartOrder'])
-    ->name('cart.placeOrder');
+        Route::post('/cart/session', [MyCartController::class, 'storeSession'])->name('cart.session');
 
-            Route::post('/logout', [AuthController::class,'logout'])->name('logout');
+        Route::get('/cart/checkout', [OrderController::class, 'showCartCheckout'])->name('cart.checkout');
+
+        Route::post('/cart/place-order', [OrderController::class, 'placeCartOrder'])->name('cart.placeOrder');
+
+        Route::post('/order/cancel',[OrderController::class, 'cancelOrder'])->name('order.cancel');
+
+        Route::post('/logout', [AuthController::class,'logout'])->name('logout');
+        
         });
 
 

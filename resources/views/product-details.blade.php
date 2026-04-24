@@ -55,7 +55,15 @@
     <input type="hidden" id="hiddenTotalPrice" name="total_price" value="">
     <h3 id="priceText" style="margin-bottom:20px;">Select variant</h3>
 
-    <a id="buyBtn" href="javascript:void(0)" class="buy-btn">Buy Now</a>
+<div style="display:flex; gap:10px;">
+    <button id="addToCartBtn" class="buy-btn">
+        Add to Cart
+    </button>
+
+    <a id="buyBtn" href="javascript:void(0)" class="buy-btn">
+        Buy Now
+    </a>
+</div>
 </div>
 </div>
 
@@ -76,6 +84,50 @@ const variants = @json($product->variants);
 let selectedColor = null, selectedSize = null, selectedGender = null, selectedQuantity = 1;
 
 function changeImage(src){ document.getElementById("bigImage").src = src; }
+
+function getSelectedVariant(){
+    return variants.find(v =>
+        (!selectedColor || v.color===selectedColor) &&
+        (!selectedSize || v.size===selectedSize) &&
+        (!selectedGender || v.gender===selectedGender)
+    );
+}
+
+document.getElementById('addToCartBtn').addEventListener('click', function(){
+
+    const variant = getSelectedVariant();
+
+    if(!variant){
+        alert('Please select variant');
+        return;
+    }
+
+    const qty = selectedQuantity || 1;
+
+    fetch('{{ route("wishlist.variant.bulk") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+        product_id: {{ $product->id }},
+        variants: [variant.id],
+        quantity: qty
+    })
+    })
+    .then(res => res.json())
+    .then(() => {
+
+        alert("Added to cart!");
+
+        
+
+    });
+});
+
+
 
 // GENERIC FUNCTION TO CREATE VARIANT BOXES
 function createVariantBox(containerId, value, type){
@@ -260,7 +312,6 @@ document.getElementById('buyBtn').addEventListener('click',function(){
         return;
     }
 
-    // NOTIFY
     if(variant.quantity === 0){
 
         const sellerId = document.getElementById('sellerId').value;
@@ -284,13 +335,31 @@ document.getElementById('buyBtn').addEventListener('click',function(){
         return;
     }
 
-    // BUY
     const qty = selectedQuantity || 1;
-    const url = `{{ route('buy.now',$product->id) }}?variant_id=${variant.id}&quantity=${qty}`;
-    window.location.href = url;
+
+    fetch('/cart/session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            items: [
+                {
+                    product_id: {{ $product->id }},
+                    variant_id: variant.id,
+                    quantity: qty
+                }
+            ]
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        window.location.href = '/cart/checkout';
+    });
 
 });
-
 // INIT
 window.addEventListener('load',()=>{ loadColors(); });
 

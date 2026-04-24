@@ -18,8 +18,8 @@ class ProductRatingController extends Controller
             'rating'       => $data['rating'],
             'comment'      => $data['comment'] ?? null,
             'post_sharing' => $data['post_sharing'] ?? null,
-            'posturl'      => $data['posturl'] ?? null,])  ;          
-            'posturl'      => $data['posturl'] ?? null,]);
+            'posturl'      => $data['posturl'] ?? null,
+            ]);      
 
                 return redirect()->back()->with('success', 'Rating submitted successfully!');
 

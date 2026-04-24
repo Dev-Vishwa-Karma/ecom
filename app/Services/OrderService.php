@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\OrderCancellation;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\SellerOrder;
 use App\Models\Wishlist;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
@@ -37,6 +39,8 @@ class OrderService
             'status' => 'pending',
             'order_number' => 'ORD-' . uniqid(),
             'order_date' => now(),
+                'total_amount' => $validated['total_price'],
+
         ]);
 
         // 2. Order Item
@@ -55,21 +59,23 @@ class OrderService
         $this->syncSellerOrders($order->id);
 
         // 4. Stock decrease
-        $variant->decrement('quantity', $validated['quantity']);
+        // $variant->decrement('quantity', $validated['quantity']);
 
-        // 5. Remove wishlist
-        Wishlist::where('user_id', Auth::id())
-            ->where('product_id', $product->id)
-            ->delete();
+        // // 5. Remove wishlist
+        // Wishlist::where('user_id', Auth::id())
+        //     ->where('product_id', $product->id)
+        //     ->delete();
 
         return $order;
     }
 
     /**
-     * 🔥 2. CART ORDER (Multiple Products Checkout)
+     *  2. CART ORDER (Multiple Products Checkout)
      */
     public function placeCartOrder(array $items, $customerData)
     {
+            $grandTotal = 0; //  important
+
         // 1. Create Order
         $order = Order::create([
             'user_id' => Auth::id(),
@@ -92,6 +98,11 @@ class OrderService
             if ($item['quantity'] > $variant->quantity) {
                 throw new \Exception('Stock not available for product ID ' . $product->id);
             }
+                    $total = $variant->price * $item['quantity'];
+
+        //  add into grand total
+        $grandTotal += $total;
+
 
             OrderItem::create([
                 'order_id' => $order->id,
@@ -105,13 +116,16 @@ class OrderService
             ]);
 
             // stock decrease
-            $variant->decrement('quantity', $item['quantity']);
+            // $variant->decrement('quantity', $item['quantity']);
 
             // wishlist cleanup
-            Wishlist::where('user_id', Auth::id())
-                ->where('product_id', $product->id)
-                ->delete();
+            // Wishlist::where('user_id', Auth::id())
+            //     ->where('product_id', $product->id)
+                // ->delete();
         }
+        $order->update([
+        'total_amount' => $grandTotal
+    ]);
 
         // 2. Group seller orders
         $this->syncSellerOrders($order->id);
@@ -120,7 +134,7 @@ class OrderService
     }
 
     /**
-     * 🔥 Seller grouping
+     *  Seller grouping
      */
     private function syncSellerOrders($orderId)
     {
@@ -144,7 +158,7 @@ class OrderService
     }
 
     /**
-     * 🔥 Seller status logic
+     *  Seller status logic
      */
     private function calculateSellerStatus($items)
     {
@@ -167,5 +181,35 @@ class OrderService
         }
 
         return 'processing';
+    }
+
+    public function cancelOrderWithReason ($data){
+        DB::transaction(function()use($data){
+
+        $order = Order::with('items')->findOrFail($data['order_id']);
+         
+         if($order->status==='canceller') return;
+
+         $order->update(['status'=>'cancelled']);
+
+         foreach($order->items as $item){
+      
+        $item->update (['status' => 'cancelled']) ;
+
+         ProductVariant::where('id', $item->variant_id)
+         ->increment('quantity', $item->quantity);
+         
+         OrderItem::where('id', $order->id)
+         ->update(['status' => 'cancelled']);
+
+        }
+        OrderCancellation::create([
+            'order_id' => $data['order_id'],
+            'user_id' => auth()->id(),
+            'reason' => $data['reason'],
+            'comment' => $data['comment']??null
+        ]);
+        
+        });
     }
 }

@@ -12,41 +12,44 @@ class OrderStatusCron extends Command
     protected $signature = 'orders:status-cron';
     protected $description = 'Automatically update order statuses based on timing rules';
 
-    public function handle()
-    {
-        $statuses = config('order_status.statuses');
+public function handle()
+{
+    $rules = config('order_status.statuses.dispatched');
 
-        foreach ($statuses as $current => $rule) {
-
-            $next = $rule['next'] ?? null;
-            if (!$next) continue; // safety
-
-            // Determine timing
-            if (isset($rule['hours'])) {
-                $timeLimit = Carbon::now()->subHours($rule['hours']);
-            } elseif (isset($rule['days'])) {
-                $timeLimit = Carbon::now()->subDays($rule['days']);
-            } else {
-                continue;
-            }
-
-            // Update eligible orders
-            $updated = Order::where('status', $current)
-                ->where('status', '!=', 'cancelled') // never update cancelled
-                ->where(function($q) use ($current, $timeLimit){
-                    if ($current === 'pending') {
-                        $q->where('created_at', '<=', $timeLimit);
-                    } else {
-                        $q->where('updated_at', '<=', $timeLimit);
-                    }
-                })
-                ->update(['status' => $next]);
-
-            if ($updated) {
-                Log::info("OrderStatusCron: $updated orders updated from $current → $next at ".now());
-            }
-        }
-
-        $this->info('OrderStatusCron ran successfully at '.now());
+    if (!$rules) {
+        Log::warning('No dispatched rules found');
+        return;
     }
+
+    $query = Order::where('status', 'dispatched');
+
+    // 🔥 dynamic time support
+    if (isset($rules['minutes'])) {
+        $query->where('updated_at', '<=', now()->subMinutes($rules['minutes']));
+    }
+
+    if (isset($rules['hours'])) {
+        $query->where('updated_at', '<=', now()->subHours($rules['hours']));
+    }
+
+    if (isset($rules['days'])) {
+        $query->where('updated_at', '<=', now()->subDays($rules['days']));
+    }
+
+    $updated = $query->update([
+        'status' => $rules['next'] ?? 'delivered',
+        'updated_at' => now()
+    ]);
+
+    if ($updated > 0) {
+        Log::info("$updated orders moved to DELIVERED");
+    } else {
+        Log::info("No orders eligible");
+    }
+
+    Log::info('Order delivery cron executed at ' . now());
+
+    $this->info('Done');
+}
+
 }

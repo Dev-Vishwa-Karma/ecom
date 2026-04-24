@@ -27,32 +27,65 @@ class AdminOrderService
     }
 
     /**
-     * 🔥 Update single item status (MOST IMPORTANT)
+     *  Update single item status (MOST IMPORTANT)
      */
     public function updateItemStatus($data)
     {
-        $item = OrderItem::findOrFail($data['order_item_id']);
+        $item = OrderItem::findOrFail($data['item_id']);
 
-        $item->update([
-            'status' => $data['status']
-        ]);
-
+        // $item->update([
+        //     'status' => $data['status']
+        // ]);
+        $item->status = $data['status'];
+        $item->save(); //  observer fire hoga
         // after update sync seller + order status
-        $this->syncAfterUpdate($item->order_id, $item->seller_id);
 
         return $item;
     }
 
+    public function updateOrderStatusBySeller($orderId, $status)
+{
+    $sellerId = auth()->id();
+
+    // 1. Update ALL items of this seller in this order
+    $items = OrderItem::where('order_id', $orderId)
+    ->where('seller_id', $sellerId)
+    ->get();
+
+foreach ($items as $item) {
+    $item->status = $status;
+    $item->save(); //  observer fire hoga
+}
+
+    // 2. Update seller_order
+    SellerOrder::where('order_id', $orderId)
+        ->where('seller_id', $sellerId)
+        ->update([
+            'status' => $status
+        ]);
+
+    // 3. Sync main order status
+    $allItems = OrderItem::where('order_id', $orderId)->get();
+
+    
+}
+
     /**
-     * 🔥 Sync seller + order status
+     *  Sync seller + order status
      */
     private function syncAfterUpdate($orderId, $sellerId)
     {
+        if (!$sellerId) {
+        return;
+    }
         // 1. Update seller order
         $sellerItems = OrderItem::where('order_id', $orderId)
             ->where('seller_id', $sellerId)
             ->get();
 
+             if ($sellerItems->isEmpty()) {
+        return;
+    }
         SellerOrder::where('order_id', $orderId)
             ->where('seller_id', $sellerId)
             ->update([
@@ -68,7 +101,7 @@ class AdminOrderService
     }
 
     /**
-     * 🔥 Order level status (global)
+     *  Order level status (global)
      */
     private function calculateOrderStatus($items)
     {
@@ -90,7 +123,7 @@ class AdminOrderService
     }
 
     /**
-     * 🔥 Seller status logic
+     *  Seller status logic
      */
     private function calculateSellerStatus($items)
     {

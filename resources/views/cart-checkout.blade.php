@@ -47,7 +47,7 @@
 }
 
 input, textarea{
-    width:100%;
+    margin-right: 12px;
     padding:10px;
     border-radius:8px;
     border:none;
@@ -67,35 +67,20 @@ textarea{
     background:#1c1c1c;
     border-radius:10px;
 }
-
 .buttons{
-    display:flex;
-    justify-content:space-between;
-    margin-top:20px;
+    
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+
 }
 
-.btn{
-    padding:10px 18px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-weight:bold;
-}
 
-.btn-cancel{
-    background:#444;
-    color:#fff;
-}
-
-.btn-submit{
-    background:#ff8c00;
-    color:#000;
-}
 </style>
 
 <div class="checkout-container">
 
-    <h2 class="checkout-title">🛒 Cart Checkout</h2>
+    <h2 class="checkout-title">🛒 Product Checkout</h2>
 
     @if(empty($items))
         <p style="text-align:center;color:#aaa;">No items found in cart</p>
@@ -106,20 +91,31 @@ textarea{
         <h3 style="color:#ff8c00;">Order Summary</h3>
 
         @foreach($items as $item)
-            <div class="item-row">
+
+        <div class="item-row">
+
                 <div>
+
                     Product : {{  $item['product']->name ?? '-'  }} <br>
                      <p> {{ $item['variant']->color ?? '-' }} |
-    {{ $item['variant']->size ?? '-' }} |
-    {{ $item['variant']->gender ?? '-' }}</p>
+                        {{ $item['variant']->size ?? '-' }} |
+                        {{ $item['variant']->gender ?? '-' }}</p>
+
 
                 </div>
 
-                <div>
-                    Qty: <b>{{ $item['quantity'] }}</b>
+                <div class="d-flex flex-column align-items-end">
+                    <span>Qty: <b>{{ $item['quantity'] }}</b></span>
+                    <span >Price: ₹ <b>{{ number_format(($item['variant']->price ?? 0) * $item['quantity'], 2) }}</b></span>
                 </div>
             </div>
         @endforeach
+    </div>
+     <div class="summary-box">
+        <div class="item-row" style="font-size:16px;">
+            <strong>Total Amount:</strong>
+            <strong>₹ {{ number_format(collect($items)->sum(fn($i) => ($i['variant']->price ?? 0) * $i['quantity']), 2) }}</strong>
+        </div>
     </div>
 
     {{-- FORM --}}
@@ -157,33 +153,33 @@ textarea{
 </div>
 
         {{-- PAYMENT --}}
+        <h4 style="color:#ff8c00; margin-top: 20px;">Payment Mode</h4>
+
         <div class="payment-box">
-            <h4 style="color:#ff8c00;">Payment Mode</h4>
+            <div class="d-flex direction-row justify-content-around">
 
             <label>
-                <input type="radio" name="payment_mode" value="cod" checked>
-                Cash on Delivery
-            </label>
+                <input type="radio" name="payment_mode" value="cod" checked>Cash on Delivery </label>
 
-            <br>
 
-            <label>
+            <label >
                 <input type="radio" name="payment_mode" value="online">
                 Online Payment
             </label>
+            </div>
         </div>
 
         {{-- BUTTONS --}}
         <div class="buttons">
 
             <button type="button"
-                    class="btn btn-cancel"
-                    onclick="window.location.href='/my-cart'">
+                    class=" btn-cancel"
+                    onclick="window.history.back()">
                 Cancel
             </button>
 
             <button type="submit"
-                    class="btn btn-submit">
+                    class=" btn-submit">
                 Place Order
             </button>
 

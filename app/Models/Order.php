@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\SellerOrder;
+use App\Models\OrderItem;
 
 class Order extends Model
 {
@@ -21,6 +22,7 @@ class Order extends Model
         'status',
         'order_number',
         'order_date',
+        'total_amount',
     ];
 
     protected $casts = [
@@ -54,7 +56,7 @@ public function products()
 }
 public function items()
 {
-    return $this->hasMany(OrderItem::class);    
+    return $this->hasMany(OrderItem::class, 'order_id', 'id');
 
 }
  public function sellerOrders()

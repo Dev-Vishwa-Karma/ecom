@@ -237,9 +237,9 @@ style="border-radius:50%;"
             <a href="{{ route('admin.my-products') }}" class="nav-link {{ request()->routeIs('admin.my-products') ? 'active-link' : '' }}">My Products</a>
             <a href="{{ route('admin.all-products') }}" class="nav-link {{ request()->routeIs('admin.all-products') ? 'active-link' : '' }}">All Products</a>
             <a href="{{ route('orders') }}" class="nav-link {{ request()->routeIs('orders') ? 'active-link' : '' }}">My Orders</a>
+            <a href="{{ route('admin.transactions') }}" class="nav-link {{ request()->routeIs('admin.transactions') ? 'active-link' : '' }}">Transactions</a>
 
-            
-            
+
             @elseif(auth()->user()->role === 'customer')
             <a href="{{ route('customer.dashboard') }}" class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active-link' : '' }}">Dashboard</a>
             <a href="{{ route('profile') }}" class="nav-link {{ request()->routeIs('profile') ? 'active-link' : '' }}">Profile</a>

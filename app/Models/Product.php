@@ -44,5 +44,9 @@ public function wishlists()
 {
     return $this->hasMany(Wishlist::class, 'product_id');
 }
-    
+    public function seller()
+    {
+        return $this->belongsTo(User::class, 'seller_id'); // Product has a seller
+    }
+
 }

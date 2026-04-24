@@ -34,9 +34,25 @@
         </a>
     </div>
 
+    <!-- Balance -->
+
+
+    <div class="d-flex gap-4 flex-wrap mb-4">
+        <div style="background:#1e1e1e; padding:20px; border-radius:12px; color:white; flex:1; min-width:250px;">
+            <h4 style="color: #ff8c00;">Pending Balance</h4>
+            <h2>₹{{ number_format($pending,2) }}</h2>
+        </div>
+
+        <div style="background:#1e1e1e; padding:20px; border-radius:12px; color:white; flex:1; min-width:250px;">
+            <h4 style="color: #ff8c00;">Available Balance</h4>
+            <h2>₹{{ number_format($available,2) }}</h2>
+        </div>
+    </div>
+
 
 <!-- Table section -->
- <h3>Top Requested Variants (Notify Me)</h3>
+ <div style="background:#1e1e1e; padding:20px; border-radius:12px; margin-top:20px; ">
+ <h4 style="color:#ff8c00;">Top Demanding Variants</h4>
 @if($topDemand ?? false && $topDemand->isNotEmpty())
    <table class="table table-bordered table-sm">
     <thead>
@@ -58,7 +74,7 @@
                     $image = $product?->images->first()?->image ?? null;
                 @endphp
                 @if($image)
-                    <img src="{{ $image }}" width="110"><br>
+                    <img class="rounded" src="{{ $image }}" width="110"><br>
                 @endif
                 
                 </div>
@@ -88,11 +104,80 @@
     </tbody>
 </table>
 @else
+ </div>
     <div class="alert alert-info">No notify requests found</div>
 @endif
     </div>
-@endsection
 
+    <div style="background:#1e1e1e; padding:20px; border-radius:12px; margin-top:20px;">
+    
+    <h4 style="color:#ff8c00; margin-bottom:20px;">
+        Monthly Revenue
+    </h4>
+
+    <canvas id="revenueChart" height="100"></canvas>
+
+</div>
+
+
+@endsection
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const revenueData = @json($revenues);
+
+    const labels = revenueData.map(r => {
+        const date = new Date(r.year, r.month - 1);
+        return date.toLocaleString('default', { month: 'short' });
+    });
+
+    const values = revenueData.map(r => parseFloat(r.total));
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const canvas = document.getElementById('revenueChart');
+
+    if (!canvas) return; // safety
+
+    const ctx = canvas.getContext('2d');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: values,
+                borderColor: '#ff8c00',
+                backgroundColor: 'rgba(255, 140, 0, 0.15)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ff8c00',
+                pointBorderColor: '#fff',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    labels: { color: '#fff' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#ccc' },
+                    grid: { color: '#333' }
+                },
+                y: {
+                    ticks: { color: '#ccc' },
+                    grid: { color: '#333' }
+                }
+            }
+        }
+    });
+
+});
+</script>
 </body>
 </html>
 

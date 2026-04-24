@@ -76,13 +76,16 @@
 </div>
 
 <!-- TOTAL -->
-<div class="d-flex justify-content-between mt-3">
+ @if ($products->isNotEmpty())
+     <div class="d-flex justify-content-between mt-3">
     <h4>Total: ₹ <span id="cart-total">0.00</span></h4>
     <div>
         <button id="remove-all">Remove All</button>
         <button id="buy-all">Buy All</button>
     </div>
 </div>
+
+ @endif
 
 @endsection
 
@@ -193,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const variantId = this.dataset.variantId;
 
             window.location.href =
-                `/buy-now/${productId}?variant_id=${variantId}&quantity=1`;
+window.location.href = '/cart/checkout';
         });
     });
 

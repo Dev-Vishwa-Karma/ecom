@@ -18,9 +18,7 @@ class OrderController extends Controller
         $this->orderService = $orderService;
     }
 
-    /**
-     * 🟢 BUY NOW PAGE
-     */
+    
     public function showBuyForm(Product $product, Request $request)
     {
         $variantId = $request->query('variant_id', $product->variants->first()->id);
@@ -29,9 +27,7 @@ class OrderController extends Controller
         return view('buy-now', compact('product', 'variantId', 'quantity'));
     }
 
-    /**
-     * 🟢 BUY NOW ORDER PLACE (Single Product)
-     */
+    
     public function placeOrder(PlaceOrderRequest $request, Product $product)
     {
         try {
@@ -41,12 +37,12 @@ class OrderController extends Controller
                 $product
             );
 
-            // 🔥 Stripe redirect (if online)
+            // Stripe redirect (if online)
             if ($request->payment_mode === 'online') {
                 return redirect()->route('payment.checkout', $order->id);
             }
 
-            // 🔥 API response
+            // API response
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -67,9 +63,7 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * 🟡 CART CHECKOUT PAGE
-     */
+   
   public function showCartCheckout()
 {
     $items = session('cart_checkout', []);
@@ -93,9 +87,7 @@ class OrderController extends Controller
     return view('cart-checkout', compact('items', 'user'));
 }
 
-    /**
-     * 🟡 CART ORDER PLACE (Multi Product)
-     */
+    
     public function placeCartOrder(Request $request)
     {
         try {
@@ -119,7 +111,7 @@ class OrderController extends Controller
             $order = $this->orderService->placeCartOrder(
                 $items,
                 $customerData
-            );
+            );          
 
             // clear cart session
             session()->forget('cart_checkout');
@@ -139,5 +131,19 @@ class OrderController extends Controller
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    public function cancelOrder(Request $request){
+
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'reason' => 'required'
+        ]);
+        app(OrderService::class)->cancelOrderWithReason($request->all());
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Order Cancelled Successfully'
+        ]);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SuperAdminTransactionController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\AdminController;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 */
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerOrderController;
 use App\Http\Controllers\DashboardRedirectController;
@@ -34,8 +36,11 @@ use App\Http\Controllers\ProductRatingController;
 use App\Http\Controllers\SellerRevenueController;
 use App\Http\Controllers\StripeConnectController;
 use App\Http\Controllers\StripePaymentController;
+use App\Http\Controllers\SuperAdminCharges;
+use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UserImageController;
+use App\Http\Controllers\AdminChargesListController;
 use Intervention\Image\ImageManager;
 
         Route::get('/', [DashboardRedirectController::class, 'redirect']);
@@ -72,18 +77,32 @@ use Intervention\Image\ImageManager;
 
         Route::middleware(['auth','role:super_admin'])->group(function () {
         
-        Route::get('/super/dashboard', function () {
+        // Route::get('/super/dashboard', function () {
 
-        $users = \App\Models\User::paginate(10);
+        // $users = \App\Models\User::paginate(10);
 
-        return view('super.dashboard', compact('users'));
-        })->name('super.dashboard');
+        // return view('super.dashboard', compact('users'));
+        // })->name('super.dashboard');
+
+        Route::get('/super/dashboard', [SuperAdminController::class, 'Dashboard'])->name('super.dashboard');
 
 
 
         Route::get('/super/profile', function () {
         return view('super.profile');
         })->name('super.profile');
+
+        Route::get('super/admin/transaction', [SuperAdminTransactionController::class, 'index'])->name('super/admin/transaction');
+
+        Route::get('super/admin/business', [BusinessController::class, 'adminList'])->name('super/admin/business');
+
+        Route::post('super/admin/business/{id}/approve', [BusinessController::class, 'approve'])->name('super/admin/business.approve');
+
+        Route::post('super/admin/business/{id}/reject', [BusinessController::class, 'reject'])->name('super/admin/business.reject');
+
+        Route::get('super/admin/charges', [SuperAdminCharges::class, 'index'])->name('super.admin.charges');
+
+        Route::post('super/admin/charges/{id}/paid', [SuperAdminCharges::class, 'markPaid'])->name('super.admin.charges.paid');
 
         Route::get('/super/admins', [AdminController::class,'adminList'])->name('super.admin.list');
 
@@ -126,6 +145,11 @@ use Intervention\Image\ImageManager;
 
         Route::get('/stripe/status', [StripeConnectController::class, 'status'])->name('stripe.status');
 
+        Route::get('/business', [BusinessController::class, 'index'])->name('business');
+        
+        Route::post('/business', [BusinessController::class, 'store'])->name('business.store');
+
+        Route::put('/admin/business/{id}', [BusinessController::class, 'update'])->name('business.update');
 
         Route::get('/profile',   fn() => view('admin.profile'))->name('profile');
 
@@ -174,6 +198,8 @@ use Intervention\Image\ImageManager;
         Route::get('/stripe/export', [StripePaymentController::class, 'export'])->name('stripe.export');
         
         Route::get('/seller/revenue', [SellerRevenueController::class, 'index'])->name('seller.revenue');
+
+        Route::get('/monthly/charges', [AdminChargesListController::class, 'index'])->name('monthly.charges');
 
         });
 

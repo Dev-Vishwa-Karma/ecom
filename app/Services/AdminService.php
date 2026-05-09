@@ -13,10 +13,29 @@ class AdminService
         return $admin;
     }
 
-    public function getAdminList()
-    {
-        return User::where('role', 'admin')->paginate(5);
-    }
+        public function getAdminList($request)
+        {
+            $query = User::where('role', 'admin');
+
+            //  SEARCH (name/email/mobile)
+            if ($request->filled('search')) {
+
+                $search = $request->search;
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('mobile', 'like', "%$search%");
+                });
+            }
+
+            // STATUS FILTER
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            return $query->latest()->paginate(5);
+        }
 
     public function getAdmin($id)
     {

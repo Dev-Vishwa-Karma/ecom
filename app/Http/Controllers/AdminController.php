@@ -21,9 +21,9 @@ class AdminController extends Controller
         return back()->with('success', 'Admin deactivated successfully.');
     }
 
-    public function adminList()
+    public function adminList(Request $request)
     {
-        $admins = $this->adminService->getAdminList();
+    $admins = $this->adminService->getAdminList( $request);
         return view('super.admin_list', compact('admins'));
     }
 

@@ -15,7 +15,20 @@
 
 </style>
     <div class="container-fluid">
-        <h2 class="mb-4">Welcome, Admin!</h2>
+        <h2 class="mb-2">Welcome, Admin!</h2>
+        <div class="mb-2">
+
+        @if ($businessStatus==="approved")
+            <span style="color:#28a745; font-size:18px; font-weight:bold;">Your business is approved. You can start selling!</span>
+        @elseif ($businessStatus==="pending")
+            <span style="color:#ffc107; font-size:18px; font-weight:bold;">Your business is pending approval. Please wait for the admin to review your details.</span>
+        @elseif ($businessStatus==="rejected")
+             <span style="color:#dc3545; font-size:18px; font-weight:bold;">Your business application was rejected. Please contact support for more information.</span>
+        @else
+            <span style="color:#6c757d; font-size:18px; font-weight:bold;">No business details found. Please submit your business information.</span>
+        @endif
+
+</div>
 
         {{-- STRIPE CONNECT SECTION --}}
     <div style="background:#1e1e1e; padding:20px; border-radius:12px; margin-bottom:20px; color:white;">
@@ -131,8 +144,8 @@
     });
 
     const values = revenueData.map(r => parseFloat(r.total));
-</script>
-<script>
+
+    
 document.addEventListener("DOMContentLoaded", function () {
 
     const canvas = document.getElementById('revenueChart');

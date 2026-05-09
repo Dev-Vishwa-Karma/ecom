@@ -23,6 +23,9 @@ class Order extends Model
         'order_number',
         'order_date',
         'total_amount',
+        'cancelled_by_type',
+        'cancelled_by_id',
+        'cancelled_at'
     ];
 
     protected $casts = [
@@ -63,4 +66,13 @@ public function items()
     {
         return $this->hasMany(SellerOrder::class);
     }
+    public function cancellation()
+{
+    return $this->hasOne(OrderCancellation::class);
+}
+
+public function cancelledByUser()
+{
+    return $this->belongsTo(User::class, 'cancelled_by_id');
+}
 }

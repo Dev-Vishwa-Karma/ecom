@@ -45,6 +45,12 @@
 
 .pending-text { color: #f39c12; font-weight: bold; }
 .available-text { color: #2ecc71; font-weight: bold; }
+
+.form-control:focus {
+    border-color: #ff8c00 !important;
+    outline: none !important;
+    box-shadow: 0 0 5px #ff8c00 !important;
+}
 </style>
 
 <div class="container-fluid">
@@ -103,8 +109,14 @@
                 @forelse($txns as $txn)
                 <tr>
                     <!-- <td>#{{ $txn['order_id'] }}</td> -->
-                     <td>#<a href="{{ route('seller-invoice', $txn['order_id']) }}" >{{ $txn['order_id'] }}</a></td>
-
+<td>
+    #<a href="{{ isset($txn['order_id']) ? route('seller-invoice', $txn['order_id']) : '#' }}">
+        {{ $txn['order_id'] ?? 'N/A' }}
+        @if(isset($txn['is_refund']) && $txn['is_refund'])
+            (Refund)
+        @endif
+    </a>
+</td>
                     <td>₹{{ number_format($txn['amount'],2) }}</td>
 
                     <td style="color:#e74c3c;">
@@ -116,9 +128,23 @@
                     </td>
 
                     <!-- PAYMENT STATUS -->
-                    <td>
-                         {{ strtoupper($txn['payment_status']) }}
-                    </td>
+                   <td>
+    @php
+        $status = strtoupper($txn['display_status']);
+    @endphp
+
+    <span class="badge-status
+        @if(in_array($txn['display_status'], ['paid','payment_received']))
+            success
+        @elseif(in_array($txn['display_status'], ['withdrawal','refunded']))
+            failed
+        @else
+            processing
+        @endif
+    ">
+        {{ $status }}
+    </span>
+</td>
 
                     <!-- BALANCE STATUS -->
                     <td class="{{ $txn['balance_status'] == 'pending' ? 'pending-text' : 'available-text' }}">
@@ -169,7 +195,7 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button class="rounded">Download CSV</button>
+                    <button class="rounded">Download PDF</button>
                 </div>
 
             </div>

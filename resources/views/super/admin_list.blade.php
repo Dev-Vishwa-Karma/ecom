@@ -1,25 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin List</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    @extends('layouts.app')
+@extends('layouts.app')
+
 @section('title', 'Admin List')
 
 @section('content')
 
+<style>
+.top-bar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.filter-box {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.filter-box input,
+.filter-box select {
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+}
+
+.filter-box button {
+    padding:8px 15px;
+    background:#ff8c00;
+    border:none;
+    border-radius:6px;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    background:#1e1e1e;
+    color:#fff;
+}
+
+th, td {
+    padding:12px;
+    border-bottom:1px solid #333;
+    text-align:left;
+}
+
+th {
+    background:#2a2a2a;
+}
+
+.status-active {
+    color:#28a745;
+    font-weight:bold;
+}
+
+.status-deactive {
+    color:#dc3545;
+    font-weight:bold;
+}
+
+.action-btn {
+    padding:5px 10px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.view-btn {  }
+.delete-btn {  }
+
+.pagination {
+    margin-top:20px;
+}
+</style>
+
 <div class="top-bar">
     <h2>Admin List</h2>
+
     <a href="{{ route('super.admin.create') }}">
-        <button>Create Admin</button>
+        <button class="action-btn view-btn">+ Create Admin</button>
     </a>
 </div>
 
-<table >
+<!--  FILTER -->
+<div class="filter-box">
+
+<form method="GET" style="display:flex; gap:10px; flex-wrap:wrap;">
+
+    <input type="text" 
+           name="search" 
+           value="{{ request('search') }}"
+           placeholder="Search name, email, mobile">
+
+    <select name="status">
+        <option value="">All Status</option>
+        <option value="active" {{ request('status')=='active'?'selected':'' }}>Active</option>
+        <option value="deactivated" {{ request('status')=='deactivated'?'selected':'' }}>Deactivated</option>
+    </select>
+
+    <button type="submit">Filter</button>
+
+    <a href="{{ route('super.admin.list') }}">
+        <button type="button">Reset</button>
+    </a>
+
+</form>
+
+</div>
+
+<!-- TABLE -->
+<table>
     <thead>
         <tr>
             <th>Name</th>
@@ -29,106 +120,123 @@
             <th>Action</th>
         </tr>
     </thead>
+
     <tbody>
-        @foreach($admins as $admin)
+        @forelse($admins as $admin)
+
         <tr>
             <td>{{ $admin->name }}</td>
             <td>{{ $admin->email }}</td>
             <td>{{ $admin->mobile }}</td>
-            <td>{{ ucfirst($admin->status) }}</td>
 
             <td>
-                <!-- View/Edit Button - opens the edit modal -->
-                <button  data-bs-toggle="modal" data-bs-target="#editAdminModal{{ $admin->id }}">View/Edit</button>
+                @if($admin->status == 'active')
+                    <span class="status-active">Active</span>
+                @else
+                    <span class="status-deactive">Deactivated</span>
+                @endif
+            </td>
 
-                <!-- Delete Button - opens the delete confirmation modal -->
-                <button  data-bs-toggle="modal" data-bs-target="#deleteConfirmationModal{{ $admin->id }}">Delete</button>
+            <td>
+                <button class="action-btn view-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editAdminModal{{ $admin->id }}">
+                    View/Edit
+                </button>
+
+                <button class="action-btn delete-btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteModal{{ $admin->id }}">
+                    Delete
+                </button>
             </td>
         </tr>
 
-        <!-- Modal for Editing/View Admin -->
-        <div class="modal fade" id="editAdminModal{{ $admin->id }}" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
+        <!--  EDIT MODAL -->
+        <div class="modal fade" id="editAdminModal{{ $admin->id }}" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
+
                     <form method="POST" action="{{ route('super.admin.update', $admin->id) }}">
                         @csrf
-                        @method('POST')
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editAdminModalLabel">Edit Admin</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ $admin->name }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" value="{{ $admin->email }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="mobile" class="form-label">Mobile</label>
-                                <input type="text" class="form-control" id="mobile" name="mobile" value="{{ $admin->mobile }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="address" class="form-label">Address</label>
-                                <textarea class="form-control" id="address" name="address" required>{{ $admin->address }}</textarea>
-                            </div>
 
-                            <!-- New Status Dropdown -->
-                            <div class="mb-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select" id="status" name="status" required>
-                                    <option value="active" {{ $admin->status === 'active' ? 'selected' : '' }}>Active</option>
-                                    <option value="deactivated" {{ $admin->status === 'deactivated' ? 'selected' : '' }}>Deactivated</option>
-                                </select>
-                            </div>
+                        <div class="modal-header">
+                            <h5>Edit Admin</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
+
+                        <div class="modal-body">
+
+                            <input type="text" name="name" class="form-control mb-2"
+                                   value="{{ $admin->name }}">
+
+                            <input type="email" name="email" class="form-control mb-2"
+                                   value="{{ $admin->email }}">
+
+                            <input type="text" name="mobile" class="form-control mb-2"
+                                   value="{{ $admin->mobile }}">
+
+                            <textarea name="address" class="form-control mb-2">{{ $admin->address }}</textarea>
+
+                            <select name="status" class="form-control">
+                                <option value="active" {{ $admin->status=='active'?'selected':'' }}>Active</option>
+                                <option value="deactivated" {{ $admin->status=='deactivated'?'selected':'' }}>Deactivated</option>
+                            </select>
+
+                        </div>
+
                         <div class="modal-footer">
-                            <button type="button"  data-bs-dismiss="modal">Close</button>
-                            <button type="submit" >Save changes</button>
+                            <button type="button" data-bs-dismiss="modal">Close</button>
+                            <button type="submit">Save</button>
                         </div>
+
                     </form>
+
                 </div>
             </div>
         </div>
 
-        <!-- Modal for Delete Confirmation -->
-        <div class="modal fade" id="deleteConfirmationModal{{ $admin->id }}" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <!--  DELETE MODAL -->
+        <div class="modal fade" id="deleteModal{{ $admin->id }}" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
+
                     <form method="POST" action="{{ route('super.admin.delete', $admin->id) }}">
                         @csrf
-                        @method('POST')  <!-- DELETE method for actual delete action -->
+
                         <div class="modal-header">
-                            <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Deletion</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <h5>Confirm Delete</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
+
                         <div class="modal-body">
-                            <p>Are you sure you want to delete the admin <strong>{{ $admin->name }}</strong>? </p>
+                            Delete <strong>{{ $admin->name }}</strong> ?
                         </div>
+
                         <div class="modal-footer">
-                            <button type="button"  data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" >Delete</button>
+                            <button type="button" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit">Delete</button>
                         </div>
+
                     </form>
+
                 </div>
             </div>
         </div>
 
-        @endforeach
+        @empty
+        <tr>
+            <td colspan="5" style="text-align:center; color:#aaa;">
+                No Admins Found
+            </td>
+        </tr>
+        @endforelse
     </tbody>
 </table>
 
+<!-- PAGINATION -->
 <div class="pagination">
-    {{ $admins->links() }}
+    {{ $admins->appends(request()->query())->links() }}
 </div>
 
 @endsection
-
-<!-- Bootstrap JS and Popper for modals -->
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
-
-</body>
-</html>

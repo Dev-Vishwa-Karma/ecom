@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreNotifyMeRequest;
+use App\Models\SuperAdminCharge;
 use App\Services\NotifyMeService;
 use App\Services\StripePaymentService;
+use Illuminate\Support\Facades\DB;
 
 class NotifyMeController extends Controller
 {
@@ -31,6 +33,12 @@ class NotifyMeController extends Controller
 
 public function adminDemandReport()
 {
+
+$BusinessDetails = DB::table('business_details')
+    ->where('user_id', auth()->id())
+->value('status');
+
+
     $user = auth()->user();
 
     $topDemand = $this->notifyMeService
@@ -59,12 +67,17 @@ public function adminDemandReport()
         $revenues = app(\App\Services\SellerRevenueService::class)
         ->getMonthlyRevenue(auth()->id());
 
+        $data = SuperAdminCharge::where('seller_id', auth()->user()->id)->get();
+
+
 
 
     return view('admin.dashboard', [
         'pending' => $balance['pending'],
         'available' => $balance['available'],
         'revenues' => $revenues,
+        'businessStatus' => $BusinessDetails,
+        'charges' => $data
     ],compact('topDemand')
     
     );

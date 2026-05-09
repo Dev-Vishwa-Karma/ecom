@@ -125,7 +125,7 @@ class PaymentController extends Controller
             }
 
             //  TRANSFER TO SELLERS
-// 🔥 GROUP ITEMS BY SELLER
+//  GROUP ITEMS BY SELLER
 $sellerGroups = $order->items->groupBy('seller_id');
 
 foreach ($sellerGroups as $sellerId => $items) {
@@ -136,10 +136,10 @@ foreach ($sellerGroups as $sellerId => $items) {
         continue;
     }
 
-    // 🔥 TOTAL OF THIS SELLER
+    //  TOTAL OF THIS SELLER
     $sellerTotal = $items->sum('total_price');
 
-    // 🔥 SINGLE TRANSFER
+    //  SINGLE TRANSFER
     $transfer = Transfer::create([
         'amount' => (int) ($sellerTotal * 100),
         'currency' => $intent->currency,
@@ -151,7 +151,7 @@ foreach ($sellerGroups as $sellerId => $items) {
     ],
     ]);
 
-    // 🔥 SINGLE PAYOUT ENTRY
+    // SINGLE PAYOUT ENTRY
     SellerPayout::create([
         'order_id' => $order->id,
         'seller_id' => $sellerId,

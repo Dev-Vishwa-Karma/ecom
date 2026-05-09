@@ -139,7 +139,11 @@ class OrderController extends Controller
             'order_id' => 'required|exists:orders,id',
             'reason' => 'required'
         ]);
-        app(OrderService::class)->cancelOrderWithReason($request->all());
+app(\App\Services\OrderService::class)->cancelOrderWithReason([
+        'order_id' => $request->order_id,
+        'reason' => $request->reason,
+        'source' => 'customer' //
+    ]);
 
         return response()->json([
             'status' => 'success',

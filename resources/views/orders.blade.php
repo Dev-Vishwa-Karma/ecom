@@ -47,7 +47,23 @@
 
         <span style="padding:5px 10px;border-radius:6px;background:#333;color:#ffcc00;">
             {{ ucfirst($order->status) }}
+
         </span>
+            @if($order->status === 'cancelled')
+        <div style="font-size:12px; color:#aaa; margin-top:4px;">
+            Cancelled by 
+            <strong style="color:#ff4d4d;">
+                {{ $order->cancelled_by_type === 'customer' ? 'You' : ucfirst($order->cancelled_by_type) }}
+            </strong>
+
+            @if($order->cancelled_at)
+                <div style="font-size:11px;">
+                    on {{ \Carbon\Carbon::parse($order->cancelled_at)->format('d M Y h:i A') }}
+                </div>
+            @endif
+        </div>
+    @endif
+
     </div>
 
     <hr style="border-color:#333;">

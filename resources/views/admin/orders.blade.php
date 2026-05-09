@@ -95,14 +95,42 @@
 <td>
 @if($sellerOrder)
 
-    @if($sellerOrder->status === 'cancelled')
-        
-        <span style="color:red; font-weight:bold;">
-            Cancelled
-        </span>
+@if($sellerOrder->status === 'cancelled')
 
-    @else
+@php
+    // ✅ fallback: NULL ho to admin maan lo
+    $type = $order->cancelled_by_type ?? 'admin';
+@endphp
 
+<div>
+    <span style="color:red; font-weight:bold;">
+        Cancelled
+    </span>
+
+    <div style="font-size:12px; color:#aaa; margin-top:4px;">
+        Cancelled by 
+        <strong style="color:#ff4d4d;">
+
+            {{--  SELLER POV LOGIC --}}
+            @if(in_array($type, ['admin','seller']))
+                You
+            @elseif($type === 'customer')
+                Customer
+            @else
+                System
+            @endif
+
+        </strong>
+
+        @if($order->cancelled_at)
+            <div style="font-size:11px;">
+                on {{ \Carbon\Carbon::parse($order->cancelled_at)->format('d M Y h:i A') }}
+            </div>
+        @endif
+    </div>
+</div>
+
+@else
         <select class="status-select"
                 data-order-id="{{ $order->id }}"
                 style="padding:5px;">

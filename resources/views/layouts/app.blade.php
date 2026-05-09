@@ -216,7 +216,7 @@ style="border-radius:50%;"
 
 </div>
 
-<div class="mt-3">
+<div class="mt-3 flex-fill overflow-auto ">
             
             @if(auth()->user()->role === 'super_admin')
             <a href="{{ route('super.dashboard') }}" class="nav-link {{ request()->routeIs('super.dashboard') ? 'active-link' : '' }}">Dashboard</a>
@@ -226,7 +226,9 @@ style="border-radius:50%;"
             <a href="{{ route('all-products') }}" class="nav-link {{ request()->routeIs('all-products') ? 'active-link' : '' }}">Products</a>
             <!-- <a href="{{ route('my-wishlist') }}" class="nav-link {{ request()->routeIs('my-wishlist') ? 'active-link' : '' }}">Wishlist</a> -->
             <a href="{{ route('orders') }}" class="nav-link {{ request()->routeIs('orders') ? 'active-link' : '' }}">My Orders</a>
-
+            <a href="{{ route('super.admin.charges') }}" class="nav-link {{ request()->routeIs('super.admin.charges') ? 'active-link' : '' }}">Charges</a>
+            <a href="{{ route('super/admin/business') }}" class="nav-link {{ request()->routeIs('super/admin/business') ? 'active-link' : '' }}">Business</a>
+            <!-- <a href="{{ route('super/admin/transaction') }}" class="nav-link {{ request()->routeIs('super/admin/transaction') ? 'active-link' : '' }}">transaction</a> -->
 
 
             @elseif(auth()->user()->role === 'admin')
@@ -238,7 +240,9 @@ style="border-radius:50%;"
             <a href="{{ route('admin.all-products') }}" class="nav-link {{ request()->routeIs('admin.all-products') ? 'active-link' : '' }}">All Products</a>
             <a href="{{ route('orders') }}" class="nav-link {{ request()->routeIs('orders') ? 'active-link' : '' }}">My Orders</a>
             <a href="{{ route('admin.transactions') }}" class="nav-link {{ request()->routeIs('admin.transactions') ? 'active-link' : '' }}">Transactions</a>
-
+            <a href="{{route('admin.business')}}" class="nav-link {{ request()->routeIs('admin.business') ? 'active-link' : '' }}">Business</a>
+            <a href="{{ route('admin.monthly.charges') }}" class="nav-link {{ request()->routeIs('admin.monthly.charges') ? 'active-link' : '' }}">Charges</a>
+            <a href=# class="nav-link" active-link : ''>Connect</a>
 
             @elseif(auth()->user()->role === 'customer')
             <a href="{{ route('customer.dashboard') }}" class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active-link' : '' }}">Dashboard</a>
@@ -419,6 +423,7 @@ content.classList.toggle("full");
 
 
 </script>
+@yield('scripts') <!-- This ensures scripts from views run -->
 
 
 </body>

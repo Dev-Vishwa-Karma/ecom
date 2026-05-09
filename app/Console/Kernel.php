@@ -19,6 +19,9 @@ class Kernel extends ConsoleKernel
             ->cron('*/10 * * * *') // run every 10 minutes
             ->withoutOverlapping()
             ->appendOutputTo(storage_path('logs/order-status-cron.log'));
+            
+                $schedule->command('charges:generate')->monthlyOn(1, '01:00');
+
     }
     /**
      * Register the commands for the application.

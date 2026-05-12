@@ -81,7 +81,7 @@
                 ">
 
                     <div style="display:flex;justify-content:space-between;gap:20px;">
-
+                <a href="{{route('product.details',['product' => $item->product->id ?? '']) }}" style="text-decoration: none; color:white">
                         <div>
 
                             <h6 style="margin-bottom:10px;">
@@ -106,6 +106,7 @@
                             </div>
 
                         </div>
+                        </a>
 
                         <div style="text-align:right;">
 

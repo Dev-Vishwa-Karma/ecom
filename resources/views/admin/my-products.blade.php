@@ -61,7 +61,65 @@
             @csrf
             <input type="text" name="name" placeholder="Product Name" required style="width:100%; padding:10px; margin-bottom:12px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd;">
             <textarea name="description" placeholder="Description" rows="4" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd;"></textarea>
+<div style="margin-bottom:20px;">
 
+    <input type="hidden" name="replace" value="0">
+
+    <label>
+        <input type="checkbox" 
+               id="create_replace_check"
+               name="replace"
+               value="1">
+        Replace Available
+    </label>
+
+    <textarea 
+        id="create_replace_policy_box"
+        name="replace_policy"
+        placeholder="Replace Policy"
+        rows="4"
+        style="width:100%; padding:10px; margin-top:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none;">
+    </textarea>
+            <input type="number"
+               id="create_replace_days"
+               name="create_replace_days"
+               placeholder="Replace Days"
+               min="0"
+               style="margin-top:10px; width:100%; padding:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none">
+
+
+</div>
+
+
+<div style="margin-bottom:20px;">
+
+    <input type="hidden" name="return" value="0">
+
+    <label>
+        <input type="checkbox" 
+               id="create_return_check"
+               name="return"
+               value="1">
+        Return Available
+    </label>
+
+    <textarea 
+        id="create_return_policy_box"
+        name="return_policy"
+        placeholder="Return Policy"
+        rows="4"
+        style="margin-top:10px; width:100%; padding:10px; margin-top:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none;">
+        
+    </textarea>
+     <input type="number"
+     id="create_return_days"
+               name="create_return_days"
+               placeholder="Return Days"
+               min="0"
+               style="width:100%; padding:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none">
+
+
+</div>
             <h4 style="margin-top:15px; color:#ff8c00;">Variants (at least one required)</h4>
             <div id="variantContainer">
                 <div class="variant-row" style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
@@ -98,6 +156,9 @@
                 <button id="nextBtn">❯</button>
             </div>
             <p id="detailDesc"></p>
+            <div id="policySection" style="margin-top:15px;"></div>
+
+            
 
             <h4 style="color:#ff8c00; margin:16px 0 8px;">Variants</h4>
             <table class="variants-table">
@@ -122,6 +183,62 @@
                 <input type="hidden" name="id" id="eId">
                 <input type="text" name="name" id="eName" required style="width:100%;padding:10px;margin-bottom:12px;border:1px solid #444;border-radius:6px;background:#2a2a2a;color:#ddd;">
                 <textarea name="description" id="eDesc" rows="4" style="width:100%;padding:10px;margin-bottom:16px;border:1px solid #444;border-radius:6px;background:#2a2a2a;color:#ddd;"></textarea>
+                <div style="margin-bottom:20px;">
+
+                    <input type="hidden" name="replace" value="0">
+
+                    <label>
+                        <input type="checkbox" 
+                            id="edit_replace_check"
+                            name="replace"
+                            value="1">
+                        Replace Available
+                    </label>
+
+                    <textarea 
+                        id="edit_replace_policy_box"
+                        name="replace_policy"
+                        placeholder="Replace Policy"
+                        rows="4"
+                        style="width:100%; padding:10px; margin-top:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none;">
+                    </textarea>
+                    <input type="number"
+                        id="edit_replace_days"
+                        name="replace_days"
+                        placeholder="Replace Days"
+                        min="0"
+                        style="width:100%; padding:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none">
+
+                </div>
+
+
+                <div style="margin-bottom:20px;">
+
+                    <input type="hidden" name="return" value="0">
+
+                    <label>
+                        <input type="checkbox" 
+                            id="edit_return_check"
+                            name="return"
+                            value="1">
+                        Return Available
+                    </label>
+
+                    <textarea 
+                        id="edit_return_policy_box"
+                        name="return_policy"
+                        placeholder="Return Policy"
+                        rows="4"
+                        style="width:100%; padding:10px; margin-top:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none;">
+                    </textarea>
+                    <input type="number"
+                        id="edit_return_days"
+                        name="return_days"
+                        placeholder="Return Days"
+                        min="0"
+                        style="margin-top:10px; width:100%; padding:10px; border:1px solid #444; border-radius:6px; background:#2a2a2a; color:#ddd; display:none">
+
+                </div>
 
                 <h4 style="color:#ff8c00; margin:16px 0 8px;">Existing Images</h4>
                 <div id="existingImagesPreview" class="edit-preview-container"></div>
@@ -216,7 +333,67 @@
         </div>
     </div>
 </div>
+<script>
 
+function setupPolicyToggle(checkId, boxId, daysId){
+
+    const check = document.getElementById(checkId);
+    const box = document.getElementById(boxId);
+    const days = document.getElementById(daysId);
+
+    if(!check || !box || !days) return;
+
+    function toggleBox(){
+
+        if(check.checked){
+            box.style.display = 'block';
+            days.style.display = 'block';
+
+        }else{
+            box.style.display = 'none';
+            days.style.display = 'none';
+
+            box.value = '';
+            days.value = '';
+        }
+    }
+
+    toggleBox();
+
+    check.addEventListener('change', toggleBox);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    // CREATE
+    setupPolicyToggle(
+        'create_replace_check',
+        'create_replace_policy_box',
+        'create_replace_days'
+    );
+
+    setupPolicyToggle(
+        'create_return_check',
+        'create_return_policy_box',
+        'create_return_days'
+    );
+
+    // EDIT
+    setupPolicyToggle(
+        'edit_replace_check',
+        'edit_replace_policy_box',
+        'edit_replace_days'
+    );
+
+    setupPolicyToggle(
+        'edit_return_check',
+        'edit_return_policy_box',
+        'edit_return_days'
+    );
+
+});
+
+</script>
 <script>
 const productsData = {!! $productsDataJson ?? '{}' !!};
 
@@ -298,18 +475,78 @@ function initEditDropzone() {
 
 function openDetail(id, mode = 'view') {
     const prod = productsData[id];
+    console.log(prod)
     if (!prod) return;
 
     currentImages = prod.images || [];
     currentIndex = 0;
 
     document.getElementById('detailTitle').textContent = prod.name;
-    document.getElementById('detailDesc').textContent = prod.description || 'No description';
+    document.getElementById('detailDesc').textContent = `Description :  ${prod.description || 'No description'}`;
+    let policyHtml = '';
+
+    if (prod.replace == 1) {
+        policyHtml += `
+            <div style="margin-bottom:15px;">
+                <h4 style="color:#ff8c00;">Replace Policy</h4>
+                <p>Product replace in ${prod.replace_days} days</p>
+                <p>Policy : ${prod.replace_policy || 'Replace available'}</p>
+            </div>
+        `;
+    }
+
+    if (prod.return == 1) {
+        policyHtml += `
+            <div style="margin-bottom:15px;">
+                <h4 style="color:#ff8c00;">Return Policy</h4>
+                <p>Product Return in ${prod.return_days} days </p>
+                <p>Policy : ${prod.return_policy || 'Return available'}</p>
+            </div>
+        `;
+    }
+
+    document.getElementById('policySection').innerHTML = policyHtml || `
+        <p style="color:#888;">No return / replace available</p>
+
+    `;
 
     ['eId', 'eName', 'eDesc'].forEach((elId, i) => {
         const el = document.getElementById(elId);
         if (el) el.value = [id, prod.name, prod.description || ''][i];
     });
+    // Replace
+    // Replace
+document.getElementById('edit_replace_check').checked = prod.replace == 1;
+
+document.getElementById('edit_replace_policy_box').value =
+    prod.replace_policy || '';
+
+document.getElementById('edit_replace_policy_box').style.display =
+    prod.replace == 1 ? 'block' : 'none';
+
+// Replace Days
+document.getElementById('edit_replace_days').value =
+    prod.replace_days || '';
+
+document.getElementById('edit_replace_days').style.display =
+    prod.replace == 1 ? 'block' : 'none';
+
+
+// Return
+document.getElementById('edit_return_check').checked = prod.return == 1;
+
+document.getElementById('edit_return_policy_box').value =
+    prod.return_policy || '';
+
+document.getElementById('edit_return_policy_box').style.display =
+    prod.return == 1 ? 'block' : 'none';
+
+// Return Days
+document.getElementById('edit_return_days').value =
+    prod.return_days || '';
+
+document.getElementById('edit_return_days').style.display =
+    prod.return == 1 ? 'block' : 'none';
 
     document.getElementById('editForm').action = '{{ route("admin.products.update", ":id") }}'.replace(':id', id);
     document.getElementById('deleteId').value = id;

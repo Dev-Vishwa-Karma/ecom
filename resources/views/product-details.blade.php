@@ -18,13 +18,24 @@
         @foreach($product->images as $img)
             <img src="{{ $img->image }}" onclick="changeImage('{{ $img->image }}')">
         @endforeach
+
     </div>
+                <p class="mb-0"> <strong>Description</strong> : {{ $product->description }}</p>
+                @if ($product->return== 1 )
+                <p class="mb-0"><strong>Return policy</strong> : Retun policy valid only for {{$product->return_days}} days</p>
+                <p class="mb-0"><strong>Term & Conditions</strong> : {{$product->return_policy}}
+                @elseif ($product->replace==1)
+                <p class="mb-0"><strong>Replace policy</strong> : Replace policy valid only for {{$product->replace_days}} days</p>
+                <p class="mb-0"><strong>Term & Conditions</strong> : {{$product->replace_policy}}
+                    @else
+                    
+                @endif
+
 </div>
 
 {{-- RIGHT SIDE --}}
 <div>
     <h2>{{ $product->name }}</h2>
-    <p>{{ $product->description }}</p>
 
     {{-- COLOR --}}
     <div class="variant-group" id="colorSection" style="display:none">

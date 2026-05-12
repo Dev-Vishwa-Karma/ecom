@@ -26,11 +26,20 @@ class ProductService{
         'name'=> $p->name,
         'price' => $p->price,
         'description' => $p->description ?? '',
+        'replace' => $p->replace,
+        'replace_policy' => $p->replace_policy,
+        'return'=> $p->return,
+        'return_policy' => $p->return_policy,
+        'return_days'=> $p->return_days,
+        'replace_days' => $p->replace_days,
+
         'images'  => $p->images->pluck('images')->toArray(),
                 ];
 
         })->toArray()
+       
     );
+    
     return compact('products', 'productsDataJson');
     }
 
@@ -39,6 +48,13 @@ class ProductService{
             'user_id'  => auth()->id(),
             'name' => $request->name,
             'description' => $request->description ?? null,
+            'return' => $request->return ?? 0,
+            'return_policy' => $request->return_policy,
+            'replace' => $request->replace ?? 0,
+            'replace_policy' => $request->replace_policy,
+            'return_days'=> $request->return_days,
+             'replace_days' => $request->replace_days,
+
 
         ]);
 
@@ -78,6 +94,14 @@ class ProductService{
     $product->update([          
         'name' => $request->name,
         'description' => $request->description ?? $product -> description,
+        'return' => $request->return ?? 0,
+        'return_policy' => $request->return_policy,
+        'replace' => $request->replace ?? 0,
+        'replace_policy' => $request->replace_policy,
+        'return_days'=> $request->return_days,
+        'replace_days' => $request->replace_days,
+
+
         ]);
 
         if($request->hasFile('images')){

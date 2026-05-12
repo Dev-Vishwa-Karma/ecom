@@ -26,6 +26,12 @@ class ProductViewService
                     'price'       => $minPrice,
                     'min_price_formatted' => '₹' . number_format($minPrice, 2),
                     'description' => $p->description ?? '',
+                    'replace' => $p->replace,
+                    'replace_policy' => $p->replace_policy,
+                    'return'=> $p->return,
+                    'return_policy' => $p->return_policy,
+                    'return_days'=> $p->return_days,
+                    'replace_days' => $p->replace_days,
                     'images'      => $p->images->pluck('image')->toArray(),
                     'variants'    => $p->variants->map(function($v) {
                         return [

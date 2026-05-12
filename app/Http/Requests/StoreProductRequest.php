@@ -26,6 +26,15 @@ class StoreProductRequest extends FormRequest
         return [
            'name'        => 'required|string|max:255',
            'description' => 'nullable|string',
+            'return' => 'nullable|boolean',
+            'replace' => 'nullable|boolean',
+
+            'return_policy' => 'nullable|string|required_if:return,1',
+            'replace_policy' => 'nullable|string|required_if:replace,1',
+            'replace_days' => 'nullable|numeric|required_if:replace,1',
+            'return_days' => 'nullable|numeric|required_if:return,1',
+
+
 
         'images'   => 'required|array|min:1',
         'images.*' => 'image|max:5120',

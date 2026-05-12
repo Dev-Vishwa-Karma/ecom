@@ -15,6 +15,12 @@ class Product extends Model
         'name',
         'description',
         'price',
+        'return',
+        'return_policy',
+        'replace',
+        'replace_days',
+        'return_days',
+        'replace_policy',
         'user_id',       
     ];
 

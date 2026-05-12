@@ -27,24 +27,24 @@ class AdminOrderController extends Controller
 
     public function updateStatus(UpdateOrderStatusRequest $request)
 {
-    if ($request->status === 'cancelled') {
+ if ($request->status === 'cancelled') {
 
-        // ✅ FORCE CANCEL SERVICE
-        $this->customerOrderService->cancelOrderWithReason([
-            'order_id' => $request->order_id,
-            'reason' => 'Cancelled by admin',
-            'cancelled_by' => 'admin' // 🔥 VERY IMPORTANT
+        $request->validate([
+            'reason' => 'required|string|max:255'
         ]);
 
-    } else {
-
-        // ✅ NORMAL FLOW
-        $this->orderService->updateOrderStatusBySeller(
+        $this->orderService->cancelSellerItems(
             $request->order_id,
-            $request->status
+            $request->reason
         );
-    }
 
+} else {
+
+    $this->orderService->updateOrderStatusBySeller(
+        $request->order_id,
+        $request->status
+    );
+}
     return response()->json([
         'message' => 'Order status updated'
     ]);

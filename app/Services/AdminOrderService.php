@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\OrderCancellation;
 use App\Models\OrderItem;
 use App\Models\SellerOrder;
 use Illuminate\Support\Facades\Auth;
@@ -10,7 +11,7 @@ class AdminOrderService
 {
     public function getOrders($request)
     {
-        $query = Order::with(['items.product', 'items.variant', 'sellerOrders'])
+        $query = Order::with(['items.cancellation' , 'items.product', 'items.variant', 'sellerOrders'])
             ->whereHas('items.product', function ($q) {
                 $q->where('user_id', Auth::id());
             })
@@ -22,6 +23,8 @@ class AdminOrderService
                     ->orWhere('order_number', 'like', '%' . $request->search . '%');
             });
         }
+
+        
 
         return $query->paginate(10);
     }
@@ -37,7 +40,7 @@ class AdminOrderService
         //     'status' => $data['status']
         // ]);
         $item->status = $data['status'];
-        $item->save(); //  observer fire hoga
+        $item->save(); //  
         // after update sync seller + order status
 
         return $item;
@@ -54,7 +57,7 @@ class AdminOrderService
 
 foreach ($items as $item) {
     $item->status = $status;
-    $item->save(); //  observer fire hoga
+    $item->save(); //  
 }
 
     // 2. Update seller_order
@@ -143,4 +146,38 @@ foreach ($items as $item) {
 
         return 'pending';
     }
+    public function cancelSellerItems($orderId , $reason)
+{
+    $sellerId = auth()->id();
+
+    // ONLY seller items
+    $items = OrderItem::where('order_id', $orderId)
+        ->where('seller_id', $sellerId)
+        ->where('status', '!=', 'cancelled')
+        ->get();
+
+    foreach ($items as $item) {
+
+        $item->update([
+            'status' => 'cancelled',
+            'cancelled_by_type' => 'seller',
+            'cancelled_by_id' => auth()->id(),
+            'cancelled_at' => now(),
+        ]);
+    }
+    OrderCancellation::create([
+    'order_id' => $item->order_id,
+    'order_item_id' => $item->id,
+    'user_id' => auth()->id(),
+    'cancelled_by_type' => 'seller',
+    'reason' => $reason,
+]);
+
+    // seller order update
+    SellerOrder::where('order_id', $orderId)
+        ->where('seller_id', $sellerId)
+        ->update([
+            'status' => 'cancelled'
+        ]);
+}
 }

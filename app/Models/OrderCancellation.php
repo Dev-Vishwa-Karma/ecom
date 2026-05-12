@@ -11,6 +11,8 @@ class OrderCancellation extends Model
     protected $fillable = [
         'order_id',
         'user_id',
+        'cancelled_by_type',
+        'order_item_id',
         'reason',
         'comment'
     ];

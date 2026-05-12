@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\OrderItem;
 use App\Models\OrderItemRefund;
 use App\Models\Payment;
+use App\Models\SellerOrder;
 use App\Models\SellerPayout;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +27,9 @@ class OrderItemObserver
             return;
         }
 
+        
         $order = $item->order;
+        $this->syncSellerOrderStatus($item);
 
         if (!$order) {
             Log::warning("Order not found for item ID: {$item->id}");
@@ -137,7 +140,7 @@ class OrderItemObserver
             /**
              * Prevent duplicate refund
              */
-            if (isset($item->refund_status) && $item->refund_status === 'refunded') {
+            if (isset($item->refund_status) && $item->refund_status === 'refund') {
                 Log::info("Refund already done for item {$item->id}");
                 return;
             }
@@ -191,32 +194,63 @@ try {
        /**
              * SELLER REVERSE TRANSFER
              */
-            $sellerPayout = SellerPayout::where('order_id', $order->id)
-                ->where('seller_id', $item->seller_id)
-                ->where('status', 'paid')
-                ->first();
+/**
+ * SELLER REVERSE TRANSFER
+ */
+$sellerPayout = SellerPayout::where('order_id', $order->id)
+    ->where('seller_id', $item->seller_id)
+    ->first();
 
-            if ($sellerPayout && $sellerPayout->stripe_transfer_id) {
+if ($sellerPayout && $sellerPayout->stripe_transfer_id) {
 
-                Transfer::createReversal(
-                    $sellerPayout->stripe_transfer_id,
-                    [
-                        'amount' => (int) ($refundAmount * 100),
-                        'metadata' => [
-                            'order_id' => $order->id,
-                            'order_item_id' => $item->id,
-                        ]
-                    ]
-                );
+    try {
 
-                Log::info("Transfer reversed for item {$item->id}");
-            }
+        Transfer::createReversal(
+            $sellerPayout->stripe_transfer_id,
+            [
+                'amount' => (int) ($refundAmount * 100),
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'order_item_id' => $item->id,
+                ]
+            ]
+        );
 
-            /**
+        Log::info("Transfer reversed for item {$item->id}");
+
+    } catch (\Exception $e) {
+
+        Log::error("Transfer reversal failed: ".$e->getMessage());
+    }
+
+    /**
+     * UPDATE PAYOUT REFUND DETAILS
+     */
+    $oldRefundAmount = $sellerPayout->refund_amount ?? 0;
+
+    $newRefundAmount = $oldRefundAmount + $refundAmount;
+
+    $payoutStatus = 'partial_refund';
+
+    if ($newRefundAmount >= $sellerPayout->amount) {
+        $payoutStatus = 'refund';
+    }
+
+    $sellerPayout->update([
+        'refund_amount' => $newRefundAmount,
+        'status' => $payoutStatus,
+    ]);
+
+    Log::info("Seller payout updated", [
+        'seller_payout_id' => $sellerPayout->id,
+        'refund_amount' => $newRefundAmount,
+        'status' => $payoutStatus,
+    ]);
+}            /**
              * MARK REFUND DONE (if columns exist)
              */
             if (isset($item->refund_status)) {
-                $item->refund_status = 'refunded';
+                $item->refund_status = 'refund';
             }
 
             if (isset($item->refund_id)) {
@@ -224,7 +258,7 @@ try {
             }
 
 $item->updateQuietly([
-    'refund_status' => 'refunded',
+    'refund_status' => 'refund',
     'refund_id' => $refund->id
 ]);
         } catch (\Exception $e) {
@@ -235,4 +269,72 @@ $item->updateQuietly([
             ]);
         }
     }
+
+    private function syncSellerOrderStatus(OrderItem $item)
+{
+    $sellerItems = OrderItem::where('order_id', $item->order_id)
+        ->where('seller_id', $item->seller_id)
+        ->get();
+
+    if ($sellerItems->isEmpty()) {
+        return;
+    }
+
+    $statuses = $sellerItems->pluck('status');
+
+    // ALL cancelled
+    if ($statuses->every(fn($s) => $s === 'cancelled')) {
+
+        SellerOrder::where('order_id', $item->order_id)
+            ->where('seller_id', $item->seller_id)
+            ->update([
+                'status' => 'cancelled'
+            ]);
+
+        return;
+    }
+
+    // delivered
+    if ($statuses->every(fn($s) => $s === 'delivered')) {
+
+        SellerOrder::where('order_id', $item->order_id)
+            ->where('seller_id', $item->seller_id)
+            ->update([
+                'status' => 'delivered'
+            ]);
+
+        return;
+    }
+
+    // dispatched
+    if ($statuses->contains('dispatched')) {
+
+        SellerOrder::where('order_id', $item->order_id)
+            ->where('seller_id', $item->seller_id)
+            ->update([
+                'status' => 'processing'
+            ]);
+
+        return;
+    }
+
+    // partial
+    if ($statuses->contains('cancelled')) {
+
+        SellerOrder::where('order_id', $item->order_id)
+            ->where('seller_id', $item->seller_id)
+            ->update([
+                'status' => 'partial'
+            ]);
+
+        return;
+    }
+
+    // default
+    SellerOrder::where('order_id', $item->order_id)
+        ->where('seller_id', $item->seller_id)
+        ->update([
+            'status' => 'pending'
+        ]);
+}
 }

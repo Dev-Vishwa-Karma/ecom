@@ -87,7 +87,7 @@
 
             <!-- STATUS -->
            @php
-    $sellerOrder = $order->sellerOrders
+        $sellerOrder = $order->sellerOrders
         ->where('seller_id', auth()->id())
         ->first();
 @endphp
@@ -98,37 +98,45 @@
 @if($sellerOrder->status === 'cancelled')
 
 @php
-    // ✅ fallback: NULL ho to admin maan lo
-    $type = $order->cancelled_by_type ?? 'admin';
+    $cancelledItem = $order->items
+        ->where('seller_id', auth()->id())
+        ->where('status', 'cancelled')
+        ->first();
+
+    $cancelledBy = $cancelledItem?->cancellation?->cancelled_by_type;
 @endphp
 
 <div>
-    <span style="color:red; font-weight:bold;">
-        Cancelled
+    <span style="font-size:14px ; color: red">
+        Cancelled by
     </span>
 
-    <div style="font-size:12px; color:#aaa; margin-top:4px;">
-        Cancelled by 
-        <strong style="color:#ff4d4d;">
 
-            {{--  SELLER POV LOGIC --}}
-            @if(in_array($type, ['admin','seller']))
+        <strong style="color : red">
+
+            @if($cancelledBy === 'seller')
                 You
-            @elseif($type === 'customer')
+
+            @elseif($cancelledBy === 'customer')
                 Customer
+           
+
             @else
                 System
             @endif
 
         </strong>
-
-        @if($order->cancelled_at)
+</br>
+        @if($cancelledItem?->cancellation?->created_at)
             <div style="font-size:11px;">
-                on {{ \Carbon\Carbon::parse($order->cancelled_at)->format('d M Y h:i A') }}
+                on {{ $cancelledItem->cancellation->created_at->format('d M Y h:i A') }}
+                 </br>
+           Reason : {{ $cancelledItem?->cancellation?->reason }}
             </div>
         @endif
-    </div>
+
 </div>
+
 
 @else
         <select class="status-select"
@@ -182,38 +190,202 @@
 
 </div>
 
+<!-- CANCEL MODAL -->
+<div id="cancelModal" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+z-index:9999;
+align-items:center;
+justify-content:center;
+">
+
+    <div style="
+        background:#1e1e1e;
+        width:400px;
+        padding:20px;
+        border-radius:10px;
+    ">
+
+        <h3 style="color:#ff8c00;margin-bottom:15px;">
+            Cancellation Reason
+        </h3>
+
+        <textarea
+            id="cancelReason"
+            placeholder="Write reason..."
+            style="
+                width:100%;
+                height:120px;
+                padding:10px;
+                border-radius:8px;
+                border:none;
+                resize:none;
+            "
+        ></textarea>
+
+        <div style="margin-top:15px;display:flex;gap:10px;justify-content:end;">
+
+            <button id="closeModalBtn"
+                style="
+                    padding:8px 16px;
+                    border:none;
+                    border-radius:6px;
+                    cursor:pointer;
+                ">
+                Close
+            </button>
+
+            <button id="confirmCancelBtn"
+                style="
+                    padding:8px 16px;
+                    background:red;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    cursor:pointer;
+                ">
+                Confirm Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 <script>
+
 document.addEventListener('DOMContentLoaded', function () {
 
+    let selectedOrderId = null;
+    let selectedSelect = null;
+
+    const modal = document.getElementById('cancelModal');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const confirmBtn = document.getElementById('confirmCancelBtn');
+
     document.querySelectorAll('.status-select').forEach(select => {
+
         select.addEventListener('change', function() {
 
             const orderId = this.dataset.orderId;
             const newStatus = this.value;
 
-            fetch('{{ route("admin.orders.update-status") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type':'application/json',
-                    'X-CSRF-TOKEN':'{{ csrf_token() }}',
-                    'Accept':'application/json'
-                },
-                body: JSON.stringify({
-                    order_id:  orderId,
-                    status: newStatus
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.message);
-                location.reload();
-            })
-            .catch(() => alert('Error updating status'));
+            // IF CANCELLED -> OPEN MODAL
+            if(newStatus === 'cancelled')
+            {
+                selectedOrderId = orderId;
+                selectedSelect = this;
 
+                modal.style.display = 'flex';
+
+                return;
+            }
+
+            // NORMAL STATUS UPDATE
+            updateOrderStatus(orderId, newStatus);
         });
+
     });
 
+    // CLOSE MODAL
+    closeBtn.addEventListener('click', function(){
+
+        modal.style.display = 'none';
+
+        if(selectedSelect){
+            selectedSelect.value = 'pending';
+        }
+
+    });
+
+    // CONFIRM CANCEL
+    confirmBtn.addEventListener('click', function(){
+
+        const reason = document.getElementById('cancelReason').value;
+
+        if(!reason){
+            alert('Please write cancellation reason');
+            return;
+        }
+
+        fetch('{{ route("admin.orders.update-status") }}', {
+
+            method: 'POST',
+
+            headers: {
+                'Content-Type':'application/json',
+                'X-CSRF-TOKEN':'{{ csrf_token() }}',
+                'Accept':'application/json'
+            },
+
+            body: JSON.stringify({
+                order_id: selectedOrderId,
+                status: 'cancelled',
+                reason: reason
+            })
+
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            alert(data.message);
+
+            modal.style.display = 'none';
+
+            location.reload();
+
+        })
+        .catch(() => {
+
+            alert('Error updating status');
+
+        });
+
+    });
+
+    // COMMON FUNCTION
+    function updateOrderStatus(orderId, status)
+    {
+        fetch('{{ route("admin.orders.update-status") }}', {
+
+            method: 'POST',
+
+            headers: {
+                'Content-Type':'application/json',
+                'X-CSRF-TOKEN':'{{ csrf_token() }}',
+                'Accept':'application/json'
+            },
+
+            body: JSON.stringify({
+                order_id: orderId,
+                status: status
+            })
+
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            alert(data.message);
+
+            location.reload();
+
+        })
+        .catch(() => {
+
+            alert('Error updating status');
+
+        });
+    }
+
 });
+
+
 </script>
 
 @endsection

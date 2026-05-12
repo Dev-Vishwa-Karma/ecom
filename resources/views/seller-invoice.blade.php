@@ -103,6 +103,7 @@ h1 { text-align:center; color:#ff8c00; margin-bottom:20px; }
         <th>Size</th>
         <th>Qty</th>
         <th>Price</th>
+        <th>Status</th>
         <th>Total</th>
     </tr>
 
@@ -120,6 +121,7 @@ h1 { text-align:center; color:#ff8c00; margin-bottom:20px; }
             <td>{{ $item->variant->size ?? '-' }}</td>
             <td>{{ $item->quantity }}</td>
             <td>₹{{ number_format($item->price,2) }}</td>
+            <td>{{ $item->status }}
             <td>₹{{ number_format($item->total_price,2) }}</td>
         </tr>
 

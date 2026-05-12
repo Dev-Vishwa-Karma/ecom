@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class OrderService
 {
     /**
-     * 🔥 1. BUY NOW (Single Product Order)
+     *  1. BUY NOW (Single Product Order)
      */
     public function placeOrder($validated, $product)
     {
@@ -59,12 +59,12 @@ class OrderService
         $this->syncSellerOrders($order->id);
 
         // 4. Stock decrease
-        // $variant->decrement('quantity', $validated['quantity']);
+        $variant->decrement('quantity', $validated['quantity']);
 
         // // 5. Remove wishlist
-        // Wishlist::where('user_id', Auth::id())
-        //     ->where('product_id', $product->id)
-        //     ->delete();
+        Wishlist::where('user_id', Auth::id())
+            ->where('product_id', $product->id)
+            ->delete();
 
         return $order;
     }
@@ -116,12 +116,12 @@ class OrderService
             ]);
 
             // stock decrease
-            // $variant->decrement('quantity', $item['quantity']);
+            $variant->decrement('quantity', $item['quantity']);
 
             // wishlist cleanup
-            // Wishlist::where('user_id', Auth::id())
-            //     ->where('product_id', $product->id)
-                // ->delete();
+            Wishlist::where('user_id', Auth::id())
+                ->where('product_id', $product->id)
+                ->delete();
         }
         $order->update([
         'total_amount' => $grandTotal
@@ -183,69 +183,76 @@ class OrderService
         return 'processing';
     }
 
- public function cancelOrderWithReason($data)
+public function cancelOrderWithReason($data)
 {
     DB::transaction(function () use ($data) {
 
         $order = Order::with('items')->findOrFail($data['order_id']);
-                if ($order->status === 'cancelled') {
+
+        $cancelledBy = $data['source'] ?? 'customer';
+
+        foreach ($order->items as $item) {
+
+            // already cancelled
+            if ($item->status === 'cancelled') {
+                continue;
+            }
+
+            $item->update([
+                'status' => 'cancelled',
+                'cancelled_by_type' => $cancelledBy,
+                'cancelled_by_id' => auth()->id(),
+                'cancelled_at' => now(),
+            ]);
+
+            OrderCancellation::create([
+                'order_id' => $order->id,
+                'order_item_id' => $item->id,
+                'user_id' => auth()->id(),
+                'cancelled_by_type' => $cancelledBy,
+                'reason' => $data['reason'],
+                'comment' => $data['comment'] ?? null,
+            ]);
+        }
+    });
+}
+
+public function cancelSingleItem($data)
+{
+    DB::transaction(function () use ($data) {
+
+        $item = OrderItem::with('order')->findOrFail($data['item_id']);
+
+        // already cancelled
+        if ($item->status === 'cancelled') {
             return;
         }
 
-        //  who cancelled
-        $cancelledBy = $data['cancelled_by'] ?? 'customer';
+        // dispatch/delivered protect
+        if (in_array($item->status, ['dispatched', 'delivered'])) {
+            throw new \Exception('Item cannot be cancelled');
+        }
 
-        // update order
-        $order->update([
+        $cancelledBy = $data['source'] ?? 'customer';
+
+        $item->update([
             'status' => 'cancelled',
             'cancelled_by_type' => $cancelledBy,
             'cancelled_by_id' => auth()->id(),
             'cancelled_at' => now(),
         ]);
 
-        // collect seller IDs
-        $sellerIds = [];
-
-        foreach ($order->items as $item) {
-
-            if ($item->status !== 'cancelled') {
-                $item->update(['status' => 'cancelled']); // 👉 observer fire hoga
-            }
-
-            $sellerIds[] = $item->seller_id;
-        }
-
-        //  UNIQUE seller IDs
-        $sellerIds = array_unique($sellerIds);
-
-        // UPDATE seller_orders
-        foreach ($sellerIds as $sellerId) {
-
-            // check seller ke sab items cancelled hai ya nahi
-            $totalItems = $order->items->where('seller_id', $sellerId)->count();
-            $cancelledItems = $order->items
-                ->where('seller_id', $sellerId)
-                ->where('status', 'cancelled')
-                ->count();
-
-            if ($totalItems === $cancelledItems) {
-
-                \App\Models\SellerOrder::where('order_id', $order->id)
-                    ->where('seller_id', $sellerId)
-                    ->update(['status' => 'cancelled']);
-            }
-        }
-
-        //  save reason
-        \App\Models\OrderCancellation::create([
-            'order_id' => $order->id,
+        OrderCancellation::create([
+            'order_id' => $item->order_id,
+            'order_item_id' => $item->id,
             'user_id' => auth()->id(),
+            'cancelled_by_type' => $cancelledBy,
             'reason' => $data['reason'],
             'comment' => $data['comment'] ?? null,
-            'cancelled_by' => $cancelledBy,
         ]);
     });
 }
+
 
     public function getAllOrdersForSuperAdmin($month = null, $year = null)
 {

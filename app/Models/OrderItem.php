@@ -46,6 +46,10 @@ class OrderItem extends Model
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
+    public function cancellation()
+{
+    return $this->hasOne(OrderCancellation::class, 'order_item_id');
+}
     
 
 }

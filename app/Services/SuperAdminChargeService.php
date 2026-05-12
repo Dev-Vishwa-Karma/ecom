@@ -11,10 +11,10 @@ class SuperAdminChargeService
     {
         $revenues = SellerPayout::select(
                 'seller_id',
-                DB::raw('SUM(amount) as total_amount'),
-                DB::raw('SUM(amount) * 0.10 as commission')
+                DB::raw('SUM(amount - refund_amount) as total_amount'),
+                DB::raw('SUM(amount - refund_amount) * 0.10 as commission')
             )
-            ->where('status', 'paid')
+            ->whereIn('status', ['paid', 'partial_refund'])
             ->whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
             ->groupBy('seller_id')
@@ -60,7 +60,7 @@ class SuperAdminChargeService
     ->where('role', 'admin')
     ->leftJoin('seller_payouts', function ($join) use ($currentMonth, $currentYear) {
         $join->on('users.id', '=', 'seller_payouts.seller_id')
-            ->where('seller_payouts.status', 'paid')
+            ->whereIn('seller_payouts.status', ['paid', 'partial_refund'])
             ->whereMonth('seller_payouts.created_at', $currentMonth)
             ->whereYear('seller_payouts.created_at', $currentYear);
     })
@@ -75,8 +75,9 @@ class SuperAdminChargeService
         DB::raw("$currentMonth as month"),
         DB::raw("$currentYear as year"),
 
-        DB::raw('COALESCE(SUM(seller_payouts.amount),0) as total_amount'),
-        DB::raw('COALESCE(SUM(seller_payouts.amount) * 0.10,0) as commission'),
+        DB::raw('COALESCE(SUM(seller_payouts.amount - seller_payouts.refund_amount),0) as total_amount'),
+
+        DB::raw('COALESCE(SUM(seller_payouts.amount - seller_payouts.refund_amount) * 0.10,0) as commission'),
 
         DB::raw("'pending' as status"),
         DB::raw('NULL as paid_at')
@@ -140,9 +141,9 @@ public function totalSales()
 {
     return SellerPayout::select(
             'seller_id',
-            DB::raw('SUM(amount) as total_sales')
+            DB::raw('SUM(amount - refund_amount) as total_sales')
         )
-        ->where('status', 'paid')
+        ->whereIn('status', ['paid', 'partial_refund'])
         ->groupBy('seller_id')
         ->pluck('total_sales', 'seller_id');
 }

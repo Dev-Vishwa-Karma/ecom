@@ -289,6 +289,8 @@ use Intervention\Image\ImageManager;
         Route::post('/cart/place-order', [OrderController::class, 'placeCartOrder'])->name('cart.placeOrder');
 
         Route::post('/order/cancel',[OrderController::class, 'cancelOrder'])->name('order.cancel');
+        Route::post('/cancel/item', [OrderController::class, 'cancelItem'])
+    ->name('order.item.cancel');
 
         Route::post('/logout', [AuthController::class,'logout'])->name('logout');
         

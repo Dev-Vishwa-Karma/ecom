@@ -25,6 +25,13 @@
     outline: none !important;
     box-shadow: 0 0 5px #ff8c00 !important;
 }
+#cancelComment{
+    background:#fff !important;
+    color:#000 !important;
+    pointer-events:auto !important;
+    position:relative;
+    z-index:9999;
+}
 </style>
 
 @section('content')
@@ -37,11 +44,167 @@
 </div>
 @endif
 
+
+
 @forelse($orders as $order)
+<div class="modal fade" id="viewOrderModal{{ $order->id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark text-white">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Order #{{ $order->order_number }}
+                </h5>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                {{-- ADDRESS --}}
+                <div style="margin-bottom:20px;">
+                    <strong>Address :</strong>{{ $order->address }}
+                    
+                </div>
+
+                {{-- ITEMS --}}
+                @foreach($order->items as $item)
+
+                <div style="
+                    border:1px solid #444;
+                    border-radius:10px;
+                    padding:15px;
+                    margin-bottom:15px;
+                ">
+
+                    <div style="display:flex;justify-content:space-between;gap:20px;">
+
+                        <div>
+
+                            <h6 style="margin-bottom:10px;">
+                                {{ $item->product->name ?? 'Product' }}
+                            </h6>
+
+                            <div style="font-size:14px;color:#ccc;">
+                                Variant :
+                                {{ $item->variant->color ?? '' }}
+                                {{ $item->variant->size ?? '' }}
+                            </div>
+
+                            <div style="margin-top:8px;">
+                                Qty : {{ $item->quantity }}
+                            </div>
+
+                            <div>
+                                Price : ₹{{ $item->price }}
+                            </div>
+                            <div>
+                                Total : ₹{{ $item->total_price }}
+                            </div>
+
+                        </div>
+
+                        <div style="text-align:right;">
+
+                            {{-- ITEM STATUS --}}
+                            <span style="
+                                background:#333;
+                                color:#ffcc00;
+                                padding:6px 12px;
+                                border-radius:6px;
+                                display:inline-block;
+                                margin-bottom:10px;
+                            ">
+                                {{ ucfirst($item->status ?? $order->status) }}
+                            </span>
+
+                                                            {{-- CANCELLED INFO --}}
+                                @if($item->cancellation)
+
+                                <div style="font-size:12px;color:#aaa;">
+
+                                    Cancelled by
+
+                                    <strong style="color:#ff4d4d;">
+
+                                        @if($item->cancellation->cancelled_by_type === 'customer')
+                                            You
+                                        @elseif($item->cancellation->cancelled_by_type === 'seller')
+                                            Seller 
+                                </br>{{$item->cancellation->reason }}
+                                        @elseif($item->cancellation->cancelled_by_type === 'admin')
+                                            Admin
+                                        @endif
+
+                                    </strong>
+
+                                </div>
+
+                                @endif
+
+                            {{-- CANCEL ITEM BUTTON --}}
+                            @if(
+                                $order->items->count() > 1
+                                &&
+                                ($item->status ?? '') !== 'cancelled'
+                                &&
+                                $order->status !== 'dispatched'
+                                &&
+                                $order->status !== 'delivered'
+                            )
+
+                                <button
+                                    class=" btn-sm mt-2 openCancelModalBtn"
+                                    data-type="item"
+                                    data-id="{{ $item->id }}">
+                                    Cancel Item
+                                </button>
+
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                @endforeach
+
+
+                {{-- FULL ORDER CANCEL --}}
+                @if(
+                    $order->status !== 'dispatched'
+                    &&
+                    $order->status !== 'delivered'
+                    &&
+                    $order->status !== 'cancelled'
+                )
+
+                <div class="text-end mt-3">
+
+                    <button
+                        class="openCancelModalBtn"
+                        data-type="order"
+                        data-id="{{ $order->id }}">
+                        Cancel Order
+                    </button>
+
+                </div>
+
+                @endif
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
 
 <div class="order-card" style="padding:15px;margin-bottom:15px;background:#1e1e1e;border-radius:10px;">
 
-    {{-- HEADER --}}
     <div style="display:flex;justify-content:space-between;align-items:center;">
         <h4 style="color:#fff;">Order #{{ $order->order_number }}</h4>
 
@@ -49,72 +212,33 @@
             {{ ucfirst($order->status) }}
 
         </span>
-            @if($order->status === 'cancelled')
-        <div style="font-size:12px; color:#aaa; margin-top:4px;">
-            Cancelled by 
-            <strong style="color:#ff4d4d;">
-                {{ $order->cancelled_by_type === 'customer' ? 'You' : ucfirst($order->cancelled_by_type) }}
-            </strong>
-
-            @if($order->cancelled_at)
-                <div style="font-size:11px;">
-                    on {{ \Carbon\Carbon::parse($order->cancelled_at)->format('d M Y h:i A') }}
-                </div>
-            @endif
-        </div>
-    @endif
-
     </div>
 
     <hr style="border-color:#333;">
 
-    {{-- DETAILS --}}
     <p><strong>Payment Mode:</strong> {{ ucfirst($order->payment_mode) }}</p>
     <p><strong>Total Amount:</strong> ₹{{ number_format($order->total_amount, 2) }}</p>
     <p><strong>Order Date:</strong> {{ $order->order_date?->format('d M Y h:i A') }}</p>
 
-    <p>
-        <strong>Address:</strong><br>
-        {{ $order->address }}
-    </p>
-
-    {{-- ACTIONS --}}
-    <div style="margin-top:15px;display:flex;gap:10px;">
+    <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
 
         {{-- INVOICE --}}
         <a href="{{ route('invoice', $order->id) }}"
-           style="padding:8px 14px;background:#ff8c00;color:#000;border-radius:6px;text-decoration:none;">
+           style="padding:8px 14px;background:#ff8c00;color:white;border-radius:6px;text-decoration:none;">
             View Invoice
         </a>
 
-        {{-- RATE BUTTON (ONLY DELIVERED) --}}
-        @if($order->status === 'delivered')
-        <a href="#"
-        style="text-decoration: none; color: black; background: #ff8c00; padding: 8px 14px; border-radius: 6px;"
-        class="rate-btn"
-        data-product-id="{{ $order->items->first()->product_id }}"
-        data-variant-id="{{ $order->items->first()->variant_id }}"
-        data-product-name="{{ $order->items->first()->product->name ?? '' }}"
-        data-variant="{{ $order->items->first()->variant->color ?? '' }} {{ $order->items->first()->variant->size ?? '' }}"
-        data-price="{{ $order->items->first()->variant->price ?? 0 }}">
-            Rate Order
-        </a>
-        @endif
-        @if ($order->status === 'pending'|| $order->status==='processing')
-            <a href="#" 
-                style="text-decoration: none; color: black; background: #ff8c00; padding: 8px 14px; border-radius: 6px;"
-                data-order-id="{{ $order->id }}"
-                data-bs-toggle="modal" 
-                data-bs-target="#cancelOrderModal"
-                class="cancelBtn"
-                >
-                Cancel Order
-            </a>
-        
-        @endif 
+        {{-- VIEW ORDER --}}
+        <button
+            type="button"
+            class="viewOrderBtn"
+            data-bs-toggle="modal"
+            data-bs-target="#viewOrderModal{{ $order->id }}"
+            style="padding:8px 14px;">
+            View Order
+        </button>
 
     </div>
-
 </div>
 
 @empty
@@ -185,41 +309,64 @@
     </div>
 </div>
 
-<!-- Cancel Order Modal -->
+<!-- Cancel Modal -->
 <div class="modal fade" id="cancelOrderModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content bg-dark text-white">
 
-            <!-- HEADER -->
             <div class="modal-header">
-                <h5 class="modal-title">Cancel Order</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title">Cancel Request</h5>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal">
+                </button>
             </div>
 
-            <!-- BODY -->
             <div class="modal-body">
 
-                <input type="hidden" id="cancelOrderId">
+                <input type="hidden" id="cancelType">
+                <input type="hidden" id="cancelTargetId">
 
-                <label><input type="radio" name="reason" value="better_price"> Better Price</label><br>
-                <label><input type="radio" name="reason" value="not_needed"> Not Needed</label><br>
-                <label><input type="radio" name="reason" value="mistake"> Mistake</label><br>
-                <label><input type="radio" name="reason" value="other" id="otherRadio"> Other</label>
+                <label class="mb-2">
+                    <input type="radio" name="reason" value="better_price">
+                    Better Price
+                </label>
+                <br>
 
-                <textarea id="otherText" class="form-control mt-2"
-                    placeholder="Write reason..." style="display:none;"></textarea>
+                <label class="mb-2">
+                    <input type="radio" name="reason" value="not_needed">
+                    Not Needed
+                </label>
+                <br>
 
-            </div>
+                <label class="mb-2">
+                    <input type="radio" name="reason" value="mistake">
+                    Mistake
+                </label>
+                <br>
 
-            <!-- FOOTER -->
+                <label class="mb-2">
+                    <input type="radio" name="reason" value="other">
+                    Other
+                </label>
+
+     </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Go Back
+
+                <button type="button"
+                        class=""
+                        data-bs-dismiss="modal">
+                    Close
                 </button>
 
-                <button type="button" class="btn btn-danger" id="confirmCancelBtn">
+                <button type="button"
+                        class=""
+                        id="confirmCancelBtn">
                     Submit Cancellation
                 </button>
+
             </div>
 
         </div>
@@ -228,32 +375,24 @@
 
 
 
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+   
+
+});
+
+
 document.addEventListener("DOMContentLoaded", function () {
 
-    let selectedOrderId = null;
 
-    document.querySelectorAll('.cancelBtn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            selectedOrderId = this.dataset.orderId;
-        });
-    });
 
-    // show textarea
-    document.getElementById('otherRadio').addEventListener('change', function () {
-        document.getElementById('otherText').style.display = 'block';
-    });
-
-    document.querySelectorAll('input[name="reason"]').forEach(r => {
-        if (r.value !== 'other') {
-            r.addEventListener('change', function () {
-                document.getElementById('otherText').style.display = 'none';
-            });
-        }
-    });
 
     // confirm cancel
     document.getElementById('confirmCancelBtn').addEventListener('click', function () {
@@ -385,7 +524,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .catch(err => console.error(err));
         });
-        // Yes clicked
         document.getElementById('fbConfirmYes').addEventListener('click', function() {
             const data = {
                 product_name: document.getElementById('modalProductName').innerText.replace('Product: ', ''),
@@ -421,6 +559,93 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
 });
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const cancelModalEl = document.getElementById('cancelOrderModal');
+    const cancelModal = new bootstrap.Modal(cancelModalEl);
+
+    // OPEN MODAL
+    document.querySelectorAll('.openCancelModalBtn').forEach(btn => {
+
+        btn.addEventListener('click', function () {
+
+            document.getElementById('cancelType').value = this.dataset.type;
+            document.getElementById('cancelTargetId').value = this.dataset.id;
+
+            // reset
+            document.querySelectorAll('input[name="reason"]').forEach(r => {
+                r.checked = false;
+            });
+
+
+            cancelModal.show();
+        });
+
+    });
+
+    // CONFIRM CANCEL
+    document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+
+        let reasonEl = document.querySelector('input[name="reason"]:checked');
+
+        if (!reasonEl) {
+            alert('Please select reason');
+            return;
+        }
+
+        const reason = reasonEl.value;
+
+        const type = document.getElementById('cancelType').value;
+        const targetId = document.getElementById('cancelTargetId').value;
+
+        let url = '';
+        let payload = {
+            reason: reason,
+        };
+
+        // ITEM CANCEL
+        if(type === 'item') {
+
+            url = "{{ route('order.item.cancel') }}";
+
+            payload.item_id = targetId;
+
+        } else {
+
+            url = "{{ route('order.cancel') }}";
+
+            payload.order_id = targetId;
+        }
+
+        fetch(url, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+
+            body: JSON.stringify(payload)
+
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            alert(data.message);
+
+            location.reload();
+
+        });
+
+    });
+
+});
+
 </script>
 
 

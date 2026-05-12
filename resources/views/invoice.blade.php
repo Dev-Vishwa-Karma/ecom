@@ -91,6 +91,7 @@ h1 { text-align: center; color: #ff8c00; margin-bottom: 20px; }
         <th>Gender</th>
         <th>Quantity</th>
         <th>Price</th>
+        <th>Status</th>
         <th>Total</th>
     </tr>
 
@@ -112,15 +113,17 @@ h1 { text-align: center; color: #ff8c00; margin-bottom: 20px; }
             <td>{{ $variant->gender ?? '-' }}</td>
             <td>{{ $item->quantity }}</td>
             <td>₹{{ number_format($item->price,2) }}</td>
+            <td>{{$item->status}}</td>
             <td>₹{{ number_format($total,2) }}</td>
         </tr>
     @endforeach
 
     <tr>
-        <td colspan="7" class="total">Grand Total</td>
+        <td colspan="8" class="total">Grand Total</td>
         <td>₹{{ number_format($grandTotal,2) }}</td>
     </tr>
 </table>
+
 
 <p style="text-align:center; margin-top:20px; color:#ff8c00;">Thank you for your purchase!</p>
 

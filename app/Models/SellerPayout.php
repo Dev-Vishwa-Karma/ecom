@@ -13,6 +13,7 @@ class SellerPayout extends Model
         'order_id',
         'seller_id',
         'amount',
+        'refund_amount',
         'stripe_transfer_id',
         'status',
         'paid_at',

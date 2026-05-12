@@ -189,17 +189,42 @@ document.addEventListener('DOMContentLoaded', function () {
     // =========================
     // BUY NOW
     // =========================
-    document.querySelectorAll('.buy-now').forEach(btn => {
-        btn.addEventListener('click', function () {
+// =========================
+// BUY NOW
+// =========================
+document.querySelectorAll('.buy-now').forEach(btn => {
 
-            const productId = this.dataset.productId;
-            const variantId = this.dataset.variantId;
+    btn.addEventListener('click', function () {
 
-            window.location.href =
-window.location.href = '/cart/checkout';
+        const productId = this.dataset.productId;
+        const variantId = this.dataset.variantId;
+
+        const item = {
+            product_id: productId,
+            variant_id: variantId,
+            quantity: this.closest('.cart-item')
+                .querySelector('.qty-input').value || 1
+        };
+
+        fetch('/cart/session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                items: [item]
+            })
+        })
+        .then(res => res.json())
+        .then(() => {
+            window.location.href = '/cart/checkout';
         });
+
     });
 
+});
     // =========================
     // BUY ALL
     // =========================

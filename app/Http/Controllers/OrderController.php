@@ -150,4 +150,24 @@ app(\App\Services\OrderService::class)->cancelOrderWithReason([
             'message' => 'Order Cancelled Successfully'
         ]);
     }
+
+    public function cancelItem(Request $request)
+{
+    $request->validate([
+        'item_id' => 'required|exists:order_items,id',
+        'reason' => 'required'
+    ]);
+
+    app(\App\Services\OrderService::class)->cancelSingleItem([
+        'item_id' => $request->item_id,
+        'reason' => $request->reason,
+        'source' => 'customer'
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Item Cancelled Successfully'
+    ]);
+}
+
 }
